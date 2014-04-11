@@ -14,7 +14,6 @@ from robot import SourceLogger, SIDE_LEFT, SIDE_RIGHT
 from gps import GPS, DummyGPS, timeName
 from camera import Camera, ImageProc, RemoteCamera, timeName, DummyProc, DummyCamera
 from laser import LaserUSB, LaserIP
-from tracker import Tracker
 from eduro import emergencyStopExtension
 from os import path, sep
 from hand import handPositionExtension
@@ -167,19 +166,6 @@ class EduroMaxi( Robot ):
     self.handPosition = None
     self.addExtension( handPositionExtension )
 
-  def attachTracker(self):
-    if self.replyLog is None:
-      self.tracker = Tracker()
-      self.registerDataSource( 'tracker', SourceLogger( self.tracker.lastMessage, timeName( "logs/src_tracker_", "log" ) ).get )
-    else:
-      self.tracker = DummyGPS() # just start
-      trackerSrcLog = self.replyLog[:-18]+"src_tracker_"+self.replyLog[-17:]
-      print "TRACKERLOG:", trackerSrcLog
-      self.registerDataSource( 'tracker', SourceLogger( None, trackerSrcLog ).get )
-    self.trackerData = None
-    self.addExtension( trackerDataExtension )
- # TODO move this to some robot helper???
-
   def attachRFID(self):
     if self.replyLog is None:
       self.rfid = RFID()
@@ -261,7 +247,7 @@ def nodeDataExtension( robot, id, data ):
   if id=='node':
     robot.nodeData = data
 
-def buildRobot( robot, attachedGPS = False, attachedCamera = False, cameraExe = None, attachedLaser = False, attachedTracker = False, replyLog = None ):
+def buildRobot( robot, attachedGPS = False, attachedCamera = False, cameraExe = None, attachedLaser = False, replyLog = None ):
   "attach various sensors to 'robot base'"
   robot.replyLog = replyLog
   if attachedGPS:
@@ -273,8 +259,5 @@ def buildRobot( robot, attachedGPS = False, attachedCamera = False, cameraExe = 
   if attachedLaser:
     robot.attachLaser()
 
-  if attachedTracker:
-    robot.attachTracker()
- 
   return robot
 
