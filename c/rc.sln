@@ -1,0 +1,32 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rc", "rc.vcproj", "{F673CB36-C58D-4085-BCC4-CA1017199D83}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "followline", "followline.vcproj", "{CDFAE9BB-218E-4F85-9AE6-97A0D7CADF18}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "avoidgreen", "avoidgreen.vcproj", "{EB122104-3743-44C2-90C7-915C5F25B9BB}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F673CB36-C58D-4085-BCC4-CA1017199D83}.Debug|Win32.ActiveCfg = Debug|Win32
+		{F673CB36-C58D-4085-BCC4-CA1017199D83}.Debug|Win32.Build.0 = Debug|Win32
+		{F673CB36-C58D-4085-BCC4-CA1017199D83}.Release|Win32.ActiveCfg = Release|Win32
+		{F673CB36-C58D-4085-BCC4-CA1017199D83}.Release|Win32.Build.0 = Release|Win32
+		{CDFAE9BB-218E-4F85-9AE6-97A0D7CADF18}.Debug|Win32.ActiveCfg = Debug|Win32
+		{CDFAE9BB-218E-4F85-9AE6-97A0D7CADF18}.Debug|Win32.Build.0 = Debug|Win32
+		{CDFAE9BB-218E-4F85-9AE6-97A0D7CADF18}.Release|Win32.ActiveCfg = Release|Win32
+		{CDFAE9BB-218E-4F85-9AE6-97A0D7CADF18}.Release|Win32.Build.0 = Release|Win32
+		{EB122104-3743-44C2-90C7-915C5F25B9BB}.Debug|Win32.ActiveCfg = Debug|Win32
+		{EB122104-3743-44C2-90C7-915C5F25B9BB}.Debug|Win32.Build.0 = Debug|Win32
+		{EB122104-3743-44C2-90C7-915C5F25B9BB}.Release|Win32.ActiveCfg = Release|Win32
+		{EB122104-3743-44C2-90C7-915C5F25B9BB}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
