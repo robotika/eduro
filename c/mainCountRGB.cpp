@@ -34,6 +34,7 @@ struct Color
   bool isRed();
   bool isBlue();
   bool isGreen();
+  bool isYellow();
 };
 
 // helper functions
@@ -50,11 +51,10 @@ bool Color::isRed()
 //  return r() > 50 && (r() > 1.2 * g()) && (r() > 1.2 * b()); // hack only for the line on the table
 }
 
-bool Color::isBlue() // hack, yellow
+bool Color::isBlue()
 {
-  return r()>100 && g()>100 && (b() < 0.7* r()) && (b() < 0.7 * g());
 //  return (b() < 0.8* r()) && (b() < 0.8 * g());
-//  return (b() > 1.2* r()) && (b() > 1.2 * g());
+  return (b() > 1.2* r()) && (b() > 1.2 * g());
 //  return b()> 50 && (b() > 1.2* r()) && (b() > 1.2 * g()); // hack only for the line on the table
 }
 
@@ -64,6 +64,12 @@ bool Color::isGreen()
 //  return (g() > 1.3* r()) && (g() > 1.3 * b());
 //  return true;
 }
+
+bool Color::isYellow()
+{
+  return r()>100 && g()>100 && (b() < 0.7* r()) && (b() < 0.7 * g());
+}
+
 
 //-----------------------------------------------------------------------------
 
@@ -100,31 +106,24 @@ CameraBlobs::BlobType findPuckInFront( IplImage *image, CvRect* roi, BubbleStruc
       char* ptr = image->imageData+ 3*x+y*image->widthStep;
       Color c;
       c.setRGB( ptr[2], ptr[1], ptr[0] );
-      if( c.isRed() )
+      if( c.isYellow() )
       {
-        countRed++;
-        sumRedX += x;
-        sumRedY += y;
-        sumRedXX += (x*x);
-        sumRedYY += (y*y);
-      }
-      if( c.isBlue() )
-      {
-        countBlue++;
-        sumBlueX += x;
-        sumBlueY += y;
-        sumBlueXX += (x*x);
-        sumBlueYY += (y*y);
-      }
-
-      if( c.isRed() )
-      {
-        ptr[0] = 0;
-        ptr[1] = 0;
-        ptr[2] = (char)255;
-      }
-      else if( c.isBlue() )
-      {
+        if( x < 320 )
+        {
+          countRed++;
+          sumRedX += x;
+          sumRedY += y;
+          sumRedXX += (x*x);
+          sumRedYY += (y*y);
+        }
+        else
+        {
+          countBlue++;
+          sumBlueX += x;
+          sumBlueY += y;
+          sumBlueXX += (x*x);
+          sumBlueYY += (y*y);
+        }
         ptr[0] = (char)255;
         ptr[1] = 0;
         ptr[2] = 0;
