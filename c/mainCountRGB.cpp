@@ -78,9 +78,6 @@ void findBlobFrames( IplImage *image, CvRect* roi )
 {
 }
 
-int boxCountUp[64];
-int boxCountDown[64];
-
 CameraBlobs::BlobType findPuckInFront( IplImage *image, CvRect* roi, BubbleStruct *pRed=0, BubbleStruct *pBlue=0 )
 {
   int countRed = 0, countBlue = 0;
@@ -93,12 +90,6 @@ CameraBlobs::BlobType findPuckInFront( IplImage *image, CvRect* roi, BubbleStruc
   int middleY;
   double leftSlope = -(426.0/190.0), leftOffset = 426.0;
   double rightSlope = 354.0/190.0, rightOffset = 354.0;
-  int i;
-  for( i = 0; i < 64; i++)
-  {
-    boxCountUp[i] = 0;
-    boxCountDown[i] = 0;
-  }
   middleY = roi->y + roi->height/2;
   for( y = roi->y; y < roi->y + roi->height; y++ )
   {
@@ -126,45 +117,17 @@ CameraBlobs::BlobType findPuckInFront( IplImage *image, CvRect* roi, BubbleStruc
         sumBlueYY += (y*y);
       }
 
-      //if( c.isRed() )
-      //{
-      //  ptr[0] = 0;
-      //  ptr[1] = 0;
-      //  ptr[2] = (char)255;
-      //}
-      //else if( c.isBlue() )
-      //{
-      //  ptr[0] = (char)255;
-      //  ptr[1] = 0;
-      //  ptr[2] = 0;
-      //}
-      //else 
-        if( c.isGreen() )
+      if( c.isRed() )
       {
-        if( y < middleY )
-          boxCountUp[x/10]++;
-        else
-          boxCountDown[x/10]++;
-
         ptr[0] = 0;
-        ptr[1] = (char)255;
+        ptr[1] = 0;
+        ptr[2] = (char)255;
+      }
+      else if( c.isBlue() )
+      {
+        ptr[0] = (char)255;
+        ptr[1] = 0;
         ptr[2] = 0;
-        if( x < 320 )
-        {
-        countRed++;
-        sumRedX += x;
-        sumRedY += y;
-        sumRedXX += (x*x);
-        sumRedYY += (y*y);
-        }
-        else
-        {
-        countBlue++;
-        sumBlueX += x;
-        sumBlueY += y;
-        sumBlueXX += (x*x);
-        sumBlueYY += (y*y);
-        }
       }
       else
       {
@@ -174,40 +137,6 @@ CameraBlobs::BlobType findPuckInFront( IplImage *image, CvRect* roi, BubbleStruc
       }
     }
   }
-
-  int max;
-  
-  max = 0;
-  for(i=0; i < 32; i++)
-    if( boxCountUp[i] > max )
-    {
-      max = boxCountUp[i];
-    }
-  sumRedX = max;
-
-  max = 0;
-  for(i=32; i < 64; i++)
-    if( boxCountUp[i] > max )
-    {
-      max = boxCountUp[i];
-    }
-  sumBlueX = max;
-
-  max = 0;
-  for(i=0; i < 32; i++)
-    if( boxCountDown[i] > max )
-    {
-      max = boxCountDown[i];
-    }
-  sumRedY = max;
-
-  max = 0;
-  for(i=32; i < 64; i++)
-    if( boxCountDown[i] > max )
-    {
-      max = boxCountDown[i];
-    }
-  sumBlueY = max;
 
   if( pRed )
   {

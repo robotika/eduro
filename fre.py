@@ -1,6 +1,6 @@
 #!/usr/bin/python
 """
-  Field Robot Event - originally written in 2010, revized 2012
+  Field Robot Event - originally written in 2010, revised 2012
 """
 # 2012 TODO list:
 # x- integrate launcher
@@ -542,9 +542,9 @@ class FieldRobot:
 #      handDown( self.robot, timeout=None )
 #      handUp( self.robot, timeout=None )
 #    return self.testPickPot()
-#    return self.ver2([-1,1]*10, detectWeeds = False, detectBlockedRow = False)  # Task1
+    return self.ver2([-1,1]*10, detectWeeds = False, detectBlockedRow = False)  # Task1
 #    return self.ver2( [3,-2,0,-4,-2,1,-2,1], detectWeeds = False, detectBlockedRow = False ) # Task2
-    return self.ver2([-1,1]*10, detectWeeds = True, detectBlockedRow = False)  # Task3
+#    return self.ver2([-1,1]*10, detectWeeds = True, detectBlockedRow = False)  # Task3
 
 from eduromaxi import EduroMaxi
 import launcher
