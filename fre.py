@@ -42,6 +42,8 @@ from camera import img2xy
 
 from hand import setupHandModule, handUp, handDown
 
+BALL_SIZE_LIMIT = 100
+
 # test of line counter
 def perpDist( d1, d2, alpha ):
   "nearest dist for two separate measurements with given alpha angle difference"
@@ -264,10 +266,6 @@ class CameraRow:
     self.endOfRow = False
     self.lastCamera = []
     self.counter = 0
-#    self.camLow = 150 # TODO!!!! 580 max?
-    self.camHigh = 300
-    self.camLow = 80 # TODO!!!! 580 max?
-#    self.camHigh = 350
 
   def updateExtension( self, robot, id, data ):
     if id == 0x80:
@@ -284,8 +282,8 @@ class CameraRow:
           sprayer( robot, cmd[1], cmd[2])
     if id == 'camera':
       cc = [int(x) for x in data[0].split()]
-      leftPip = (self.camLow < cc[2]) and (cc[2] < self.camHigh) and (self.camLow < cc[3]) and (cc[3] < self.camHigh )
-      rightPip = (self.camLow < cc[4]) and (cc[4] < self.camHigh) and (self.camLow < cc[5]) and (cc[5] < self.camHigh )
+      leftPip = (cc[0] > BALL_SIZE_LIMIT )
+      rightPip = (cc[1] > BALL_SIZE_LIMIT )
       if leftPip or rightPip:
         print "WEED:", leftPip, rightPip
         self.lastCamera.append( (self.counter + 20, leftPip, rightPip ) )
@@ -542,9 +540,10 @@ class FieldRobot:
 #      handDown( self.robot, timeout=None )
 #      handUp( self.robot, timeout=None )
 #    return self.testPickPot()
-    return self.ver2([-1,1]*10, detectWeeds = False, detectBlockedRow = False)  # Task1
-#    return self.ver2( [3,-2,0,-4,-2,1,-2,1], detectWeeds = False, detectBlockedRow = False ) # Task2
+#    return self.ver2([-1,1]*10, detectWeeds = False, detectBlockedRow = False)  # Task1
+#    return self.ver2( [0,-1,0,-1,2], detectWeeds = False, detectBlockedRow = True ) # Task2
 #    return self.ver2([-1,1]*10, detectWeeds = True, detectBlockedRow = False)  # Task3
+    return self.ver2( [-2,2,-2,2], detectWeeds = False, detectBlockedRow = True ) # Task2
 
 from eduromaxi import EduroMaxi
 import launcher
