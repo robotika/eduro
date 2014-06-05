@@ -110,6 +110,7 @@ class LaserRow:
 
   def reset( self, pose = (0,0,0), offsetDeg=0 ):
     print "RESET ROW (%0.2f, %0.2f, %0.1f), offset=" % (pose[0], pose[1], math.degrees(pose[2])), offsetDeg 
+    viewlog.dumpBeacon( pose[:2], color=(128,128,128) )
     self.preference = None
     self.center = None
     if self.rowHeading:
