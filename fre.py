@@ -129,27 +129,12 @@ class LaserRow:
     self.cornLeft = 10.0 # far
     self.cornRight = 10.0
     self.collisionAhead = 10.0,10.0,False # far (wide, narrow, override)
-    self.targetPotDetected = 0
     self.minGapSize = 3
 
 
   def updateExtension( self, robot, id, data ):
     if id == 'remission' and len(data) > 0:
-      step = self.step
-      if self.verbose:
-        print "REMISSION", max(data)
-      if max(data) >= 0: #250:
-        arr = zip([min(i) for i in [itertools.islice(data, start, start+step) for start in range(0,len(data),step)]],
-            [max(i) for i in [itertools.islice(data, start, start+step) for start in range(0,len(data),step)]])
-        for i in xrange(len(arr)):
-          lo,hi = arr[i]
-          if hi-lo > 200:
-            print "!POT FOUND!", i,(lo,hi)
-            if i < 54/2:
-              self.targetPotDetected = 1
-            else:
-              self.targetPotDetected = 1
-
+      pass # ignored for FRE 2014
 
     if id == 'laser' and len(data) > 0:
       step = 10
