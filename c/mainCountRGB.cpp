@@ -288,6 +288,7 @@ int main( int argc, char *argv[] )
             cvShowImage( ROBOTCHALLENGE_WND_INPUT, orig );
           else
             cvShowImage( ROBOTCHALLENGE_WND_INPUT, img );
+//          cvSaveImage("out.jpg", img);
           key = cvWaitKey( paused ? 0 : pauseTimeMs );
           if( key == 'p' || key == 'P' )
             paused = !paused;
