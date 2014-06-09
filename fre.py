@@ -265,16 +265,16 @@ class CameraRow:
             robot.beep  = 1
           else:
             robot.beep  = 0
-          sprayer( robot, cmd[1], cmd[2])
+          sprayer( robot, cmd[2], cmd[1] ) # swapped due to wrong wiring
     if id == 'camera':
       cc = [int(x) for x in data[0].split()]
       leftPip = (cc[0] > BALL_SIZE_LIMIT )
       rightPip = (cc[1] > BALL_SIZE_LIMIT )
       if leftPip or rightPip:
         print "WEED:", leftPip, rightPip
-        self.lastCamera.append( (self.counter + 20, leftPip, rightPip ) )
+        self.lastCamera.append( (self.counter + 0, leftPip, rightPip ) )
       else:
-        self.lastCamera.append( (self.counter + 20+4, False, False) )
+        self.lastCamera.append( (self.counter + 0+4, False, False) )
 
 
 
