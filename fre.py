@@ -272,6 +272,10 @@ class CameraRow:
       rightPip = (cc[1] > BALL_SIZE_LIMIT )
       if leftPip or rightPip:
         print "WEED:", leftPip, rightPip
+        if leftPip:
+          viewlog.dumpBeacon( combinedPose(robot.localisation.pose(), (0,0.35,0))[:2], color=(255,255,0) )
+        if rightPip:
+          viewlog.dumpBeacon( combinedPose(robot.localisation.pose(), (0,-0.35,0))[:2], color=(255,255,0) )
         self.lastCamera.append( (self.counter + 0, leftPip, rightPip ) )
       else:
         self.lastCamera.append( (self.counter + 0+4, False, False) )

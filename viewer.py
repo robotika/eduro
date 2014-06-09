@@ -150,7 +150,7 @@ def drawScans( foreground, scans, shouldDrawSensors, shouldDrawBeacons ):
         if color == None:
           pygame.draw.circle( foreground, (255,0,int((-1-range)*255*3.3)), scr(x,y), 6 )
         else:
-          pygame.draw.circle( foreground, color, scr(x,y), 6 ) 
+          pygame.draw.circle( foreground, color, scr(x,y), 10 ) 
     elif range > -2.5:
       # pucks (not nice2)
       pygame.draw.circle( foreground, (255,0,168), scr(x,y), 3 )
