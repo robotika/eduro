@@ -141,6 +141,7 @@ class LaserRow:
       data2 = [x == 0 and 10000 or x for x in data]
       arr = [min(i)/1000.0 for i in [itertools.islice(data2, start, start+step) for start in range(0,len(data2),step)]]
       arr.reverse()
+      robot.preprocessedLaser = arr
 
       limit = self.radius
       danger = False
@@ -229,7 +230,7 @@ class LaserRow:
           self.directionAngle = 0.0 # if you do not know, go ahead
         if left >= 17 and right >= 17:
           self.endOfRow = True
-          if self.verbose:
+          if self.verbose and robot.insideField:
             print "laser: END OF ROW"
 
       pose = robot.localisation.pose()
@@ -287,6 +288,7 @@ class FieldRobot:
   rowPotsWidth = 0 #0.45
   def __init__( self, robot, configFilename, verbose = False ):
     self.robot = robot
+    self.robot.insideField = True
 #    self.robot.fnSpeedLimitController = [self.robot.pauseSpeedFn] 
     self.robot.fnSpeedLimitController = [] 
     self.robot.addExtension( emergencyStopExtension )
@@ -371,6 +373,7 @@ class FieldRobot:
       row.reset( offsetDeg=None ) # just for test, try to find the gap (kitchen test)
 #      row = cameraRow
       for action in code:
+        self.robot.insideFiled = True
         print "=================  ACTION ", action, "================="
         print "battery:", self.robot.battery
         while not row.endOfRow:
@@ -411,6 +414,7 @@ class FieldRobot:
 #          sprayer( self.robot, False, False )
 
         # handle action after row termination
+        self.robot.insideField = False
         self.robot.beep = 1
         self.driver.stop()
         self.robot.beep = 0
@@ -434,7 +438,7 @@ class FieldRobot:
           else:
             self.driver.turn( math.radians(-90), radius = self.rowWidth/2.0, angularSpeed=math.radians(40) )
 #          self.driver.goStraight( (math.fabs(action)-1) * (self.rowWidth+self.rowPotsWidth)+self.rowPotsWidth )
-          self.crossRows( math.fabs(action)-1, rowsOnLeft = (action < 0) )
+          self.crossRows( row, math.fabs(action)-1, rowsOnLeft = (action < 0) )
           if action < 0:
             self.driver.turn( math.radians(90), radius = self.rowWidth/2.0, angularSpeed=math.radians(40) )
           else:
@@ -493,7 +497,7 @@ class FieldRobot:
       self.testB()
       handUp(self.robot,timeout=None)
 
-  def crossRows( self, num, rowsOnLeft ):
+  def crossRows0( self, num, rowsOnLeft ):
     "follow N lines without turns"
     self.driver.goStraight( num * (self.rowWidth+self.rowPotsWidth)+self.rowPotsWidth )
     return
@@ -518,6 +522,54 @@ class FieldRobot:
         if len(distArr) > 0:
           prevDist = min(distArr)
       i += 1
+
+  def crossRows( self, row, num, rowsOnLeft ):
+    IGNORE_NEIGHBORS = 2
+    ROWS_OFFSET = 0.5
+
+    goal = combinedPose( self.robot.localisation.pose(), (1.0, 0, 0) )    
+    line = Line( self.robot.localisation.pose(), goal )
+    while True:
+      for cmd in self.driver.followLineG( line ):
+        self.robot.setSpeedPxPa( *cmd ) 
+        self.robot.update()
+        if row.newData:
+          row.newData = False
+          break
+      else:
+        print "END OF LINE REACHED!"
+
+      if self.robot.preprocessedLaser != None:
+        sarr = sorted([(x,i) for (i,x) in enumerate(self.robot.preprocessedLaser)])[:5]
+        ax,ai = sarr[0]
+        for bx,bi in sarr[1:]:
+          if abs(ai-bi) > IGNORE_NEIGHBORS:
+            break
+        else:
+          print "NO 2nd suitable minimum"
+        print (ax,ai), (bx,bi)
+        if rowsOnLeft:
+          offset = -ROWS_OFFSET
+          if ai > bi:
+            (ax,ai), (bx,bi) = (bx,bi), (ax,ai)
+        else:
+          offset = ROWS_OFFSET
+          if ai < bi: # rows on right
+            (ax,ai), (bx,bi) = (bx,bi), (ax,ai)
+        p = self.robot.localisation.pose()
+        A = combinedPose( (p[0], p[1], p[2]+math.radians(135-5*ai) ), (ax,0,0) )
+        B = combinedPose( (p[0], p[1], p[2]+math.radians(135-5*bi) ), (bx,0,0) )
+        line = Line(A,B) # going through the ends of rows
+        A2 = combinedPose( (A[0], A[1], line.angle), (0, offset, 0) )
+        B2 = combinedPose( (B[0], B[1], line.angle), (2.0, offset, 0) )
+        line = Line(A2, B2)
+        viewlog.dumpBeacon( A2[:2], color=(255,0,0) )
+        viewlog.dumpBeacon( B2[:2], color=(255,128,0) )
+      else:
+        print "BACKUP solution!!!"
+        goal = combinedPose( self.robot.localisation.pose(), (1.0, 0, 0) )    
+        line = Line( self.robot.localisation.pose(), goal )
+
 
 
   def __call__( self ):
