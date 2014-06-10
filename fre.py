@@ -497,7 +497,7 @@ class FieldRobot:
       self.testB()
       handUp(self.robot,timeout=None)
 
-  def crossRows0( self, num, rowsOnLeft ):
+  def crossRows0( self, row, num, rowsOnLeft ):
     "follow N lines without turns"
     self.driver.goStraight( num * (self.rowWidth+self.rowPotsWidth)+self.rowPotsWidth )
     return
@@ -529,6 +529,8 @@ class FieldRobot:
 
     goal = combinedPose( self.robot.localisation.pose(), (1.0, 0, 0) )    
     line = Line( self.robot.localisation.pose(), goal )
+    lastA, lastB = None, None
+    ends = []
     while True:
       for cmd in self.driver.followLineG( line ):
         self.robot.setSpeedPxPa( *cmd ) 
@@ -559,6 +561,16 @@ class FieldRobot:
         p = self.robot.localisation.pose()
         A = combinedPose( (p[0], p[1], p[2]+math.radians(135-5*ai) ), (ax,0,0) )
         B = combinedPose( (p[0], p[1], p[2]+math.radians(135-5*bi) ), (bx,0,0) )
+        if lastA == None:
+          ends.extend( [A,B] )
+          lastA, lastB = A, B
+        print "DIST", distance(lastA, A), distance(lastB, B), distance(lastB,A)
+        if distance(lastB,A) < 0.2:
+          print "NEXT ROW"
+          ends.append( B ) # new one
+          lastA, lastB = A, B
+        if len(ends) > num + 1:
+          break
         line = Line(A,B) # going through the ends of rows
         A2 = combinedPose( (A[0], A[1], line.angle), (0, offset, 0) )
         B2 = combinedPose( (B[0], B[1], line.angle), (2.0, offset, 0) )
