@@ -573,6 +573,8 @@ class FieldRobot:
         A2 = combinedPose( (A[0], A[1], line.angle), (0, offset, 0) )
         B2 = combinedPose( (B[0], B[1], line.angle), (2.0, offset, 0) )
         line = Line(A2, B2)
+        viewlog.dumpBeacon( A[:2], color=(200,0,0) )
+        viewlog.dumpBeacon( B[:2], color=(200,128,0) )
         viewlog.dumpBeacon( A2[:2], color=(255,0,0) )
         viewlog.dumpBeacon( B2[:2], color=(255,128,0) )
         if len(ends) > num + 1:
