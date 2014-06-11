@@ -44,30 +44,6 @@ from hand import setupHandModule, handUp, handDown
 
 BALL_SIZE_LIMIT = 100
 
-# test of line counter
-def perpDist( d1, d2, alpha ):
-  "nearest dist for two separate measurements with given alpha angle difference"
-  d = math.sqrt(d1*d1 - 2*d1*d2*math.cos(alpha) + d2*d2)
-  return abs(d1*d2*math.sin(alpha)/d)
-
-def splitScan( scan, rowsOnLeft, limit = 2000 ):
-  "split scan into monotonous sub-segments"
-  # TODO in meters??
-  ret = []
-  last = []
-  for x in scan:
-    if x < limit:
-      if len(last) == 0 or (x < last[-1] and not rowsOnLeft) or (x > last[-1] and rowsOnLeft):
-        last.append( x )
-      else:
-        if len(last) > 2:
-          ret.append( last )
-        last = [x]
-  if len(last) > 2:
-    ret.append( last )
-  return ret
-
-
 
 # TODO move to robot.py (?)
 def compassHeading( rawCompass ):
@@ -297,7 +273,6 @@ class FieldRobot:
     self.robot.laser.stopOnExit = False  # for faster boot-up
     self.robot.attachCamera( cameraExe = "../robotchallenge/rc" ) # TODO what was used?!
     self.robot.attachHand()
-#    self.robot.attachRFID()
     self.robot.rfidData = None # hack 2013
     self.robot.gpsData = None
     self.driver = Driver( self.robot, maxSpeed = 0.7, maxAngularSpeed = math.radians(60) )
@@ -329,20 +304,6 @@ class FieldRobot:
       self.robot.update()
     print "!!! GO !!!" 
 
-  def pickPot( self ):
-    "pick pot with rose"
-    # make space for the fork-lift
-    print "LOADING POT"
-    self.driver.turn( math.radians(-50), radius = 0.40, angularSpeed=math.radians(20) )
-    handDown(self.robot,timeout=None)
-    self.driver.turn( math.radians(50), angularSpeed=math.radians(20) )
-    self.driver.turn( math.radians(20), radius = -0.28, angularSpeed=math.radians(20) )    
-    handUp(self.robot,timeout=None)
-    self.driver.turn( math.radians(-20), radius = 0.28, angularSpeed=math.radians(20) )
-    self.driver.turn( math.radians(-50), angularSpeed=math.radians(20) )
-    self.driver.turn( math.radians(50), radius = -0.40, angularSpeed=math.radians(20) )
-    print "POT LOADED"
-
 
   def ver2( self, code, detectWeeds = True, detectBlockedRow = True ):
     print "Field Robot - LASER & CAMERA"
@@ -351,7 +312,6 @@ class FieldRobot:
       # start GPS sooner to get position fix
 #      self.robot.gps.start()
       self.robot.laser.start()
-#      self.robot.rfid.start()
       self.waitForStart()
       if not self.robot.switchBlueSelected:
         print "RED -> mirroring code directions!!!"
@@ -455,73 +415,15 @@ class FieldRobot:
     print "battery:", self.robot.battery
     self.robot.camera.requestStop()
 #    self.robot.gps.requestStop()
-#    self.robot.rfid.requestStop()
     self.robot.laser.requestStop()
 
-  def testSpreyer( self ):
-    sprayer( self.robot, True, False )
-    for i in range(50):
-      self.robot.update()
-    sprayer( self.robot, False, True )
-    for i in range(50):
-      self.robot.update()
-    sprayer( self.robot, False, False )
 
-  def testPickPot( self ):
-    try:
-      # start GPS sooner to get position fix
-      self.robot.gps.start()
-      self.robot.laser.start()
-      self.waitForStart()
-      self.robot.camera.start()
-      self.pickPot()
-    except EmergencyStopException, e:
-      print "EmergencyStopException"
-    self.robot.camera.requestStop()
-    self.robot.gps.requestStop()
-    self.robot.laser.requestStop()
-
-  def testA( self ):
-    self.driver.turn( math.radians(-20), radius = 0.28 )
-    self.driver.turn( math.radians(-20) )
-    handUp(self.robot,timeout=None)
-    self.driver.turn( math.radians(40), radius = -0.40 )
-  def testB( self ):
-    self.driver.turn( math.radians(-40), radius = 0.40 )
-    handDown(self.robot,timeout=None)
-    self.driver.turn( math.radians(20) )
-    self.driver.turn( math.radians(20), radius = -0.28 )
-  def testX( self ):
-    for i in xrange(10):
-      self.testA()
-      self.testB()
-      handUp(self.robot,timeout=None)
 
   def crossRows0( self, row, num, rowsOnLeft ):
     "follow N lines without turns"
     self.driver.goStraight( num * (self.rowWidth+self.rowPotsWidth)+self.rowPotsWidth )
     return
 
-    i = 0
-    prevDist = None
-    for cmd in self.driver.goStraightG( num * (self.rowWidth+self.rowPotsWidth)+self.rowPotsWidth ):
-      self.robot.setSpeedPxPa( *cmd ) 
-      self.robot.update()
-      if i % 10 == 0:
-        if rowsOnLeft:
-          tmp = [int(x) for x in self.robot.laserData][270:450:10]
-        else:
-          tmp = [int(x) for x in self.robot.laserData][90:270:10]
-        ss = splitScan( tmp, rowsOnLeft )
-        distArr = [int(perpDist(a[0], a[-1], (len(a)-1)*math.radians(5)))/1000. for a in ss]
-        print ss, distArr
-        if prevDist != None and len(distArr) > 0 and prevDist < min(distArr):
-          num -= 1
-          if num == 0:
-            break
-        if len(distArr) > 0:
-          prevDist = min(distArr)
-      i += 1
 
   def crossRows( self, row, num, rowsOnLeft ):
     IGNORE_NEIGHBORS = 2
@@ -590,12 +492,6 @@ class FieldRobot:
     print "RUNNING:", self.configFilename
     if self.configFilename.startswith("cmd:"):
       return eval( self.configFilename[4:] )
-#    return self.testX()
-#    return self.pickPot()
-#    for i in xrange(10):
-#      handDown( self.robot, timeout=None )
-#      handUp( self.robot, timeout=None )
-#    return self.testPickPot()
 #    return self.ver2([-1,1]*10, detectWeeds = False, detectBlockedRow = False)  # Task1
 #    return self.ver2( [0,-1,0,-1,2], detectWeeds = False, detectBlockedRow = True ) # Task2
 #    return self.ver2([-1,1]*10, detectWeeds = True, detectBlockedRow = False)  # Task3
