@@ -569,14 +569,14 @@ class FieldRobot:
           print "NEXT ROW"
           ends.append( B ) # new one
           lastA, lastB = A, B
-        if len(ends) > num + 1:
-          break
         line = Line(A,B) # going through the ends of rows
         A2 = combinedPose( (A[0], A[1], line.angle), (0, offset, 0) )
         B2 = combinedPose( (B[0], B[1], line.angle), (2.0, offset, 0) )
         line = Line(A2, B2)
         viewlog.dumpBeacon( A2[:2], color=(255,0,0) )
         viewlog.dumpBeacon( B2[:2], color=(255,128,0) )
+        if len(ends) > num + 1:
+          break
       else:
         print "BACKUP solution!!!"
         goal = combinedPose( self.robot.localisation.pose(), (1.0, 0, 0) )    
