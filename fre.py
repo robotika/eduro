@@ -38,7 +38,7 @@ from line import distance, Line
 from ray_trace import combinedPose
 
 from viewlog import viewLogExtension, viewCompassExtension
-from camera import img2xy
+from camera import img2xy, timeName
 
 from hand import setupHandModule, handUp, handDown
 
@@ -58,6 +58,18 @@ def sprayer( robot, left, right ):
     cmd += 2
 #  robot.can.sendData( 0x206, [cmd] ) 
   robot.can.sendData( 0x20C, [cmd] ) 
+
+g_ballsFile = None
+def reportBall( coord ):
+  global g_ballsFile
+  # TODO GPS position
+  # TODO real run only
+  if g_ballsFile == None:
+    g_ballsFile = open( timeName( "logs/balls-eduro","txt"), "w")
+    g_ballsFile.write( "EDURO Team, CULS 2014\n" )
+  g_ballsFile.write( "%.3f, %.3f\n" % coord )
+  g_ballsFile.flush()
+
 
 def dumpLaserGeometry():
   # TODO len(data) a step
@@ -250,9 +262,13 @@ class CameraRow:
       if leftPip or rightPip:
         print "WEED:", leftPip, rightPip
         if leftPip:
-          viewlog.dumpBeacon( combinedPose(robot.localisation.pose(), (0,0.35,0))[:2], color=(255,255,0) )
+          xy = combinedPose(robot.localisation.pose(), (0,0.35,0))[:2]
+          reportBall( xy ) # TODO GPS data?
+          viewlog.dumpBeacon( xy, color=(255,255,0) )
         if rightPip:
-          viewlog.dumpBeacon( combinedPose(robot.localisation.pose(), (0,-0.35,0))[:2], color=(255,255,0) )
+          xy = combinedPose(robot.localisation.pose(), (0,-0.35,0))[:2]
+          reportBall( xy ) # TODO GPS data?
+          viewlog.dumpBeacon( xy, color=(255,255,0) )
         self.lastCamera.append( (self.counter + 0, leftPip, rightPip ) )
       else:
         self.lastCamera.append( (self.counter + 0+4, False, False) )
