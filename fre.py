@@ -118,6 +118,7 @@ class LaserRow:
     self.cornRight = 10.0
     self.collisionAhead = 10.0,10.0,False # far (wide, narrow, override)
     self.minGapSize = 3
+    self.lastLeft, self.lastRight = None, None
 
 
   def updateExtension( self, robot, id, data ):
@@ -167,7 +168,7 @@ class LaserRow:
         self.center = prevCenter
       if self.center == None:
         self.center = len(arr)/2
-      while i < self.center:
+      while i <= self.center:
         if arr[self.center - i] < limit:
           break
         i += 1
@@ -178,6 +179,15 @@ class LaserRow:
           break
         i += 1
       right = i
+
+      p = robot.localisation.pose()
+      if self.center-left >= 0:
+        self.lastLeft = combinedPose( (p[0], p[1], p[2]+math.radians(135-5*(self.center-left)) ), (arr[self.center-left],0,0) )
+#        viewlog.dumpBeacon(self.lastLeft[:2], color=(0,128,0))
+      if self.center+right < len(arr):
+        self.lastRight = combinedPose( (p[0], p[1], p[2]+math.radians(135-5*(self.center+right)) ), (arr[self.center+right],0,0) )
+#        viewlog.dumpBeacon(self.lastRight[:2], color=(0,128,50))
+
       if self.verbose:
         if danger and left+right < self.minGapSize:
           print "MIN GAP SIZE danger:", left+right
@@ -447,6 +457,12 @@ class FieldRobot:
   def crossRows( self, row, num, rowsOnLeft ):
     IGNORE_NEIGHBORS = 2
     ROWS_OFFSET = 0.5
+
+    if row.lastLeft:
+      viewlog.dumpBeacon(row.lastLeft[:2], color=(0,128,0))
+    if row.lastRight:
+      viewlog.dumpBeacon(row.lastRight[:2], color=(0,128,50))
+
 
     goal = combinedPose( self.robot.localisation.pose(), (1.0, 0, 0) )    
     line = Line( self.robot.localisation.pose(), goal )
