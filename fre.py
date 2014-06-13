@@ -415,10 +415,13 @@ class FieldRobot:
             self.driver.turn( math.radians(-90), radius = self.rowWidth/2.0, angularSpeed=math.radians(40) )
 #          self.driver.goStraight( (math.fabs(action)-1) * (self.rowWidth+self.rowPotsWidth)+self.rowPotsWidth )
           self.crossRows( row, math.fabs(action)-1, rowsOnLeft = (action < 0) )
+          self.driver.stop()
           if action < 0:
-            self.driver.turn( math.radians(90), radius = self.rowWidth/2.0, angularSpeed=math.radians(40) )
+#            self.driver.turn( math.radians(90), radius = self.rowWidth/2.0, angularSpeed=math.radians(40) )
+            self.driver.turn( math.radians(90), radius = 0.0, angularSpeed=math.radians(40) )
           else:
-            self.driver.turn( math.radians(-90), radius = self.rowWidth/2.0, angularSpeed=math.radians(40) )
+#            self.driver.turn( math.radians(-90), radius = self.rowWidth/2.0, angularSpeed=math.radians(40) )
+            self.driver.turn( math.radians(-90), radius = 0.0, angularSpeed=math.radians(40) )
 
         # clear flag for detection
 #        row.reset( self.robot.localisation.pose() )
