@@ -43,7 +43,7 @@ from camera import img2xy, timeName
 from hand import setupHandModule, handUp, handDown
 
 BALL_SIZE_LIMIT = 100
-
+MIN_GAP_SIZE = 5  # used to be 3 (2013)
 
 # TODO move to robot.py (?)
 def compassHeading( rawCompass ):
@@ -117,7 +117,6 @@ class LaserRow:
     self.cornLeft = 10.0 # far
     self.cornRight = 10.0
     self.collisionAhead = 10.0,10.0,False # far (wide, narrow, override)
-    self.minGapSize = 3
     self.lastLeft, self.lastRight = None, None
 
 
@@ -189,18 +188,19 @@ class LaserRow:
 #        viewlog.dumpBeacon(self.lastRight[:2], color=(0,128,50))
 
       if self.verbose:
-        if danger and left+right < self.minGapSize:
+        if danger and left+right < MIN_GAP_SIZE:
           print "MIN GAP SIZE danger:", left+right
         s = ''
         for i in arr:
           s += (i < 0.5 and 'X' or (i<1.0 and 'x' or (i<1.5 and '.' or ' ')))
         s = "".join( list(s)[:self.center] + ['C'] + list(s)[self.center:] )
         print "'" + s + "'"      
+#        print "LRLR\t%d\t%d\t%d" % (left, right, left+right)
       if left+right <= 17: # TODO limit based on minSize, radius and sample angle
         self.center += (right-left)/2
         offset = self.center-len(arr)/2
         self.directionAngle = math.radians( -offset*step/2.0 )
-        self.collisionAhead = min(arr[54/3:2*54/3]), min(arr[4*54/9:5*54/9]), (left+right < 3)
+        self.collisionAhead = min(arr[54/3:2*54/3]), min(arr[4*54/9:5*54/9]), (left+right < MIN_GAP_SIZE)
         if False: #self.verbose:
           if self.collisionAhead[0] < 0.25:
             print "!!! COLISSION AHEAD !!!", self.collisionAhead
@@ -216,8 +216,8 @@ class LaserRow:
           offset -= 3
         self.directionAngle = math.radians( -offset*step/2.0 )
       else:
-#        if self.verbose:
-#          print "OFF", left, right, left+right, robot.compass
+        if self.verbose:
+          print "OFF", left, right #, left+right, robot.compass
         if self.rowHeading:
           self.directionAngle = normalizeAnglePIPI(self.rowHeading-robot.localisation.pose()[2])
           if abs(self.directionAngle) > math.radians(90):
@@ -266,6 +266,8 @@ class CameraRow:
             robot.beep  = 0
           sprayer( robot, cmd[2], cmd[1] ) # swapped due to wrong wiring
     if id == 'camera':
+      if self.verbose and len(data) > 1:
+        print data[1]
       cc = [int(x) for x in data[0].split()]
       leftPip = (cc[0] > BALL_SIZE_LIMIT )
       rightPip = (cc[1] > BALL_SIZE_LIMIT )
