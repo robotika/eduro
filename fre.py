@@ -592,11 +592,9 @@ class FieldRobot:
     print "RUNNING:", self.configFilename
     if self.configFilename.startswith("cmd:"):
       return eval( self.configFilename[4:] )
-    return self.ver2([-1,1]*10, detectWeeds = False, detectBlockedRow = False)  # Task1
-#    return self.ver2( [0,-1,0,-1,2], detectWeeds = False, detectBlockedRow = True ) # Task2
+#    return self.ver2([-1,1]*10, detectWeeds = False, detectBlockedRow = False)  # Task1
+    return self.ver2( [2,-1,0,-2,3,2,0], detectWeeds = False, detectBlockedRow = True ) # Task2 S-2R-1L-0-2L-3R-2R-F
 #    return self.ver2([-1,1]*10, detectWeeds = True, detectBlockedRow = False)  # Task3
-#    return self.ver2( [-3,4,-2,2], detectWeeds = False, detectBlockedRow = True ) # Task2
-#    return self.ver2( [-2,0,2], detectWeeds = False, detectBlockedRow = True ) # Task2
 
 from eduromaxi import EduroMaxi
 import launcher
