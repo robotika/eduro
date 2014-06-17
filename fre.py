@@ -43,7 +43,7 @@ from camera import img2xy, timeName
 from hand import setupHandModule, handUp, handDown
 
 BALL_SIZE_LIMIT = 100
-MIN_GAP_SIZE = 5  # used to be 3 (2013)
+MIN_GAP_SIZE = 4 #3 #5
 MAX_GAP_SIZE = 13 #17
 SLOW_DOWN_ANGLE = math.radians(15.0)
 
@@ -245,7 +245,10 @@ class LaserRow:
           self.line = Line( B, (2*B[0]-A[0], 2*B[1]-A[1]) ) # B+(B-A)
           if self.line and self.line.length < 0.5:
             self.line = None
-          if self.prevLR:
+          else:
+            self.center = len(arr)/2
+            # reset center
+          """if self.prevLR:
             if abs(left-self.prevLR[0]) > 4 and abs(right-self.prevLR[1]) < 3:
               left = self.prevLR[0]
               self.center += (right-left)/2
@@ -259,7 +262,8 @@ class LaserRow:
             else:
               self.directionAngle = 0.0 # if you do not know, go ahead
           else:
-            self.directionAngle = 0.0 # if you do not know, go ahead
+            self.directionAngle = 0.0 # if you do not know, go ahead"""
+          self.directionAngle = 0.0 # default
           
         if left >= 17 and right >= 17 or left+right >= 40:
           self.endOfRow = True
@@ -469,11 +473,11 @@ class FieldRobot:
           self.crossRows( row, math.fabs(action)-1, rowsOnLeft = (action < 0) )
           self.driver.stop()
           if action < 0:
-#            self.driver.turn( math.radians(90), radius = self.rowWidth/2.0, angularSpeed=math.radians(40) )
-            self.driver.turn( math.radians(90), radius = 0.0, angularSpeed=math.radians(40) )
+            self.driver.turn( math.radians(90), radius = self.rowWidth/2.0, angularSpeed=math.radians(40) )
+#            self.driver.turn( math.radians(90), radius = 0.0, angularSpeed=math.radians(40) )
           else:
-#            self.driver.turn( math.radians(-90), radius = self.rowWidth/2.0, angularSpeed=math.radians(40) )
-            self.driver.turn( math.radians(-90), radius = 0.0, angularSpeed=math.radians(40) )
+            self.driver.turn( math.radians(-90), radius = self.rowWidth/2.0, angularSpeed=math.radians(40) )
+#            self.driver.turn( math.radians(-90), radius = 0.0, angularSpeed=math.radians(40) )
 
         # clear flag for detection
 #        row.reset( self.robot.localisation.pose() )
@@ -490,15 +494,15 @@ class FieldRobot:
 
 
 
-  def crossRows0( self, row, num, rowsOnLeft ):
+  def crossRows( self, row, num, rowsOnLeft ):
     "follow N lines without turns"
     self.driver.goStraight( num * (self.rowWidth+self.rowPotsWidth)+self.rowPotsWidth )
     return
 
 
-  def crossRows( self, row, num, rowsOnLeft ):
+  def crossRows1( self, row, num, rowsOnLeft ):
     IGNORE_NEIGHBORS = 2
-    ROWS_OFFSET = 0.5
+    ROWS_OFFSET = 0.7 #0.5
 
 #    if row.lastLeft:
 #      viewlog.dumpBeacon(row.lastLeft[:2], color=(0,128,0))
@@ -522,7 +526,13 @@ class FieldRobot:
         print "END OF LINE REACHED!"
 
       if self.robot.preprocessedLaser != None:
-        sarr = sorted([(x,i) for (i,x) in enumerate(self.robot.preprocessedLaser)])[:5]
+        tmp = self.robot.preprocessedLaser[:]
+        tlen = len(tmp)
+        if rowsOnLeft:
+          tmp = tmp[:tlen/2] + [3.0]*(tlen-tlen/2)
+        else:
+          tmp = [3.0]*(tlen-tlen/2) + tmp[tlen/2:]
+        sarr = sorted([(x,i) for (i,x) in enumerate(tmp)])[:5]
         ax,ai = sarr[0]
         for bx,bi in sarr[1:]:
           if abs(ai-bi) > IGNORE_NEIGHBORS:
@@ -547,8 +557,10 @@ class FieldRobot:
         if self.verbose:
           print "DIST", distance(lastA, A), distance(lastB, B), distance(lastB,A)
         if distance(lastB,A) < 0.2:
-          print "NEXT ROW", distance(start, self.robot.localisation.pose())
-          ends.append( B ) # new one
+          dist = distance(start, self.robot.localisation.pose())
+          print "NEXT ROW", dist
+          if dist > 0.4:
+            ends.append( B ) # new one
           lastA, lastB = A, B
         line = Line(A,B) # going through the ends of rows
         A2 = combinedPose( (A[0], A[1], line.angle), (0, offset, 0) )
@@ -571,10 +583,10 @@ class FieldRobot:
     print "RUNNING:", self.configFilename
     if self.configFilename.startswith("cmd:"):
       return eval( self.configFilename[4:] )
-    return self.ver2([-1,1]*10, detectWeeds = False, detectBlockedRow = False)  # Task1
+#    return self.ver2([-1,1]*10, detectWeeds = False, detectBlockedRow = False)  # Task1
 #    return self.ver2( [0,-1,0,-1,2], detectWeeds = False, detectBlockedRow = True ) # Task2
 #    return self.ver2([-1,1]*10, detectWeeds = True, detectBlockedRow = False)  # Task3
-#    return self.ver2( [-2,2,-2,2], detectWeeds = False, detectBlockedRow = True ) # Task2
+    return self.ver2( [-2,2,-2,2], detectWeeds = False, detectBlockedRow = True ) # Task2
 
 from eduromaxi import EduroMaxi
 import launcher
