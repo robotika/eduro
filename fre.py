@@ -496,11 +496,20 @@ class FieldRobot:
 
   def crossRows( self, row, num, rowsOnLeft ):
     "follow N lines without turns"
+    dist = num * self.rowWidth
+    if num > 1:
+      dist += 0.1
+    self.driver.goStraight( dist )
+    return
+
+
+  def crossRows0( self, row, num, rowsOnLeft ):
+    "follow N lines without turns"
     self.driver.goStraight( num * (self.rowWidth+self.rowPotsWidth)+self.rowPotsWidth )
     return
 
 
-  def crossRows1( self, row, num, rowsOnLeft ):
+  def crossRows2( self, row, num, rowsOnLeft ):
     IGNORE_NEIGHBORS = 2
     ROWS_OFFSET = 0.7 #0.5
 
@@ -583,10 +592,11 @@ class FieldRobot:
     print "RUNNING:", self.configFilename
     if self.configFilename.startswith("cmd:"):
       return eval( self.configFilename[4:] )
-#    return self.ver2([-1,1]*10, detectWeeds = False, detectBlockedRow = False)  # Task1
+    return self.ver2([-1,1]*10, detectWeeds = False, detectBlockedRow = False)  # Task1
 #    return self.ver2( [0,-1,0,-1,2], detectWeeds = False, detectBlockedRow = True ) # Task2
 #    return self.ver2([-1,1]*10, detectWeeds = True, detectBlockedRow = False)  # Task3
-    return self.ver2( [-2,2,-2,2], detectWeeds = False, detectBlockedRow = True ) # Task2
+#    return self.ver2( [-3,4,-2,2], detectWeeds = False, detectBlockedRow = True ) # Task2
+#    return self.ver2( [-2,0,2], detectWeeds = False, detectBlockedRow = True ) # Task2
 
 from eduromaxi import EduroMaxi
 import launcher
