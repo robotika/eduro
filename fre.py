@@ -237,7 +237,8 @@ class LaserRow:
           if self.verbose:
             print "DIFF %.1f" % math.degrees(self.directionAngle)
         else:
-          print "PATH GAP"    
+          if self.verbose:
+            print "PATH GAP"    
           A, B = self.poseHistory[0][:2], self.poseHistory[-1][:2]
           viewlog.dumpBeacon( A, color=(0,0,180) )
           viewlog.dumpBeacon( B, color=(0,30,255) )
@@ -499,11 +500,12 @@ class FieldRobot:
     IGNORE_NEIGHBORS = 2
     ROWS_OFFSET = 0.5
 
-    if row.lastLeft:
-      viewlog.dumpBeacon(row.lastLeft[:2], color=(0,128,0))
-    if row.lastRight:
-      viewlog.dumpBeacon(row.lastRight[:2], color=(0,128,50))
-
+#    if row.lastLeft:
+#      viewlog.dumpBeacon(row.lastLeft[:2], color=(0,128,0))
+#    if row.lastRight:
+#      viewlog.dumpBeacon(row.lastRight[:2], color=(0,128,50))
+    start = self.robot.localisation.pose()[:2]
+    viewlog.dumpBeacon( start, color=(255,128,0))
 
     goal = combinedPose( self.robot.localisation.pose(), (1.0, 0, 0) )    
     line = Line( self.robot.localisation.pose(), goal )
@@ -542,9 +544,10 @@ class FieldRobot:
         if lastA == None:
           ends.extend( [A,B] )
           lastA, lastB = A, B
-        print "DIST", distance(lastA, A), distance(lastB, B), distance(lastB,A)
+        if self.verbose:
+          print "DIST", distance(lastA, A), distance(lastB, B), distance(lastB,A)
         if distance(lastB,A) < 0.2:
-          print "NEXT ROW"
+          print "NEXT ROW", distance(start, self.robot.localisation.pose())
           ends.append( B ) # new one
           lastA, lastB = A, B
         line = Line(A,B) # going through the ends of rows
@@ -571,7 +574,7 @@ class FieldRobot:
     return self.ver2([-1,1]*10, detectWeeds = False, detectBlockedRow = False)  # Task1
 #    return self.ver2( [0,-1,0,-1,2], detectWeeds = False, detectBlockedRow = True ) # Task2
 #    return self.ver2([-1,1]*10, detectWeeds = True, detectBlockedRow = False)  # Task3
-#    return self.ver2( [-5,5,-2,2], detectWeeds = False, detectBlockedRow = True ) # Task2
+#    return self.ver2( [-2,2,-2,2], detectWeeds = False, detectBlockedRow = True ) # Task2
 
 from eduromaxi import EduroMaxi
 import launcher
