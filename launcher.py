@@ -125,7 +125,7 @@ def launch(cmd_args, robotFactory, task, configFn = None, canArgs={}):
     if isFromLog or simulation:
       viewlog.viewLogFile = open( "view.log", "w" )
       robot.addExtension( viewLogExtension )
-      robot.addExtension( viewCompassExtension )
+#      robot.addExtension( viewCompassExtension )
       robot.addExtension( viewPoseExtension )
       laserViewer = LaserViewer( robot, distanceLimit = 2.0, sideLimit = 10 )
     if isFromLog:
