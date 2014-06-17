@@ -44,6 +44,8 @@ from hand import setupHandModule, handUp, handDown
 
 BALL_SIZE_LIMIT = 100
 MIN_GAP_SIZE = 5  # used to be 3 (2013)
+MAX_GAP_SIZE = 13 #17
+SLOW_DOWN_ANGLE = math.radians(15.0)
 
 # TODO move to robot.py (?)
 def compassHeading( rawCompass ):
@@ -118,6 +120,8 @@ class LaserRow:
     self.cornRight = 10.0
     self.collisionAhead = 10.0,10.0,False # far (wide, narrow, override)
     self.lastLeft, self.lastRight = None, None
+    self.prevLR = None
+    self.poseHistory = []
 
 
   def updateExtension( self, robot, id, data ):
@@ -125,6 +129,9 @@ class LaserRow:
       pass # ignored for FRE 2014
 
     if id == 'laser' and len(data) > 0:
+      self.poseHistory.append( robot.localisation.pose()[:2] )
+      if len(self.poseHistory) > 20:
+        self.poseHistory = self.poseHistory[-20:]
       step = 10
       data2 = [x == 0 and 10000 or x for x in data]
       arr = [min(i)/1000.0 for i in [itertools.islice(data2, start, start+step) for start in range(0,len(data2),step)]]
@@ -196,7 +203,11 @@ class LaserRow:
         s = "".join( list(s)[:self.center] + ['C'] + list(s)[self.center:] )
         print "'" + s + "'"      
 #        print "LRLR\t%d\t%d\t%d" % (left, right, left+right)
-      if left+right <= 17: # TODO limit based on minSize, radius and sample angle
+#        if self.prevLR :
+#          print "LRDIFF", left-self.prevLR[0], right-self.prevLR[1]
+
+      self.line = None # can be defined inside
+      if left+right <= MAX_GAP_SIZE: # TODO limit based on minSize, radius and sample angle
         self.center += (right-left)/2
         offset = self.center-len(arr)/2
         self.directionAngle = math.radians( -offset*step/2.0 )
@@ -208,7 +219,8 @@ class LaserRow:
             print "free space", self.collisionAhead
       elif left < 3 or right < 3:
         # wide row & collision ahead
-        print left, right, left+right
+        if self.verbose:
+          print "NEAR", left, right, left+right
         offset = self.center-len(arr)/2
         if left < right:
           offset += 3
@@ -218,22 +230,46 @@ class LaserRow:
       else:
         if self.verbose:
           print "OFF", left, right #, left+right, robot.compass
-        if self.rowHeading:
+        if False: # hacked, ignoring compass   self.rowHeading:
           self.directionAngle = normalizeAnglePIPI(self.rowHeading-robot.localisation.pose()[2])
           if abs(self.directionAngle) > math.radians(90):
             self.directionAngle = normalizeAnglePIPI(self.rowHeading-robot.localisation.pose()[2]+math.radians(180))
-#          if self.verbose:
-#            print "DIFF %.1f" % math.degrees(self.directionAngle)
+          if self.verbose:
+            print "DIFF %.1f" % math.degrees(self.directionAngle)
         else:
-          self.directionAngle = 0.0 # if you do not know, go ahead
-        if left >= 17 and right >= 17:
+          print "PATH GAP"    
+          A, B = self.poseHistory[0][:2], self.poseHistory[-1][:2]
+          viewlog.dumpBeacon( A, color=(0,0,180) )
+          viewlog.dumpBeacon( B, color=(0,30,255) )
+          self.line = Line( B, (2*B[0]-A[0], 2*B[1]-A[1]) ) # B+(B-A)
+          if self.line and self.line.length < 0.5:
+            self.line = None
+          if self.prevLR:
+            if abs(left-self.prevLR[0]) > 4 and abs(right-self.prevLR[1]) < 3:
+              left = self.prevLR[0]
+              self.center += (right-left)/2
+              offset = self.center-len(arr)/2
+              self.directionAngle = math.radians( -offset*step/2.0 )
+            elif abs(right-self.prevLR[1]) > 4 and abs(left-self.prevLR[0]) < 3:
+              right = self.prevLR[1]
+              self.center += (right-left)/2
+              offset = self.center-len(arr)/2
+              self.directionAngle = math.radians( -offset*step/2.0 )
+            else:
+              self.directionAngle = 0.0 # if you do not know, go ahead
+          else:
+            self.directionAngle = 0.0 # if you do not know, go ahead
+          
+        if left >= 17 and right >= 17 or left+right >= 40:
           self.endOfRow = True
           if self.verbose and robot.insideField:
             print "laser: END OF ROW"
+      self.prevLR = left, right
 
       pose = robot.localisation.pose()
       goal = combinedPose( (pose[0], pose[1], pose[2]+self.directionAngle), (self.radius, 0, 0) )
-      self.line = Line( pose, goal )
+      if self.line == None:
+        self.line = Line( pose, goal )
       self.newData = True
       self.cornLeft = min(arr[5:9])
       self.cornRight = min(arr[40:44])
@@ -367,6 +403,9 @@ class FieldRobot:
         while not row.endOfRow:
 #          sprayer( self.robot, True, True )
           for (speed, angularSpeed) in self.driver.followLineG( row.line ):
+#            print "TEST %.2f" % (math.degrees(normalizeAnglePIPI(row.line.angle - self.robot.localisation.pose()[2])))
+            if abs(normalizeAnglePIPI(row.line.angle - self.robot.localisation.pose()[2])) > SLOW_DOWN_ANGLE:
+              speed *= 0.9
             if self.robot.laserData:
               self.robot.toDisplay = 'OK'
             else:
@@ -529,10 +568,10 @@ class FieldRobot:
     print "RUNNING:", self.configFilename
     if self.configFilename.startswith("cmd:"):
       return eval( self.configFilename[4:] )
-#    return self.ver2([-1,1]*10, detectWeeds = False, detectBlockedRow = False)  # Task1
+    return self.ver2([-1,1]*10, detectWeeds = False, detectBlockedRow = False)  # Task1
 #    return self.ver2( [0,-1,0,-1,2], detectWeeds = False, detectBlockedRow = True ) # Task2
 #    return self.ver2([-1,1]*10, detectWeeds = True, detectBlockedRow = False)  # Task3
-    return self.ver2( [-2,2,-2,2], detectWeeds = False, detectBlockedRow = True ) # Task2
+#    return self.ver2( [-5,5,-2,2], detectWeeds = False, detectBlockedRow = True ) # Task2
 
 from eduromaxi import EduroMaxi
 import launcher
