@@ -101,6 +101,11 @@ def parseGSV( nmea ):
         sat[ int(a[i]) ] = (int(a[i+1]), int(a[i+2]), int(a[i+3]))
     return sat
 
+def parsePTNL( nmea ):
+  # $PTNL,PJK,154851.00,061714,+5746412.615,N,+686283.416,E,2,05,5.8,EHT+123.804,M*45
+  a = nmea.split("*")[0].split(",")
+  if a[0] == '$PTNL':
+    return a
 
 #-------------------------------------------
 def checksumSiRF( data ):
@@ -155,7 +160,7 @@ class GPS( Thread ):
     if os.name == 'nt': # windows (could be also used sys.platform == 'win32'
       self.com = serial.Serial( 'COM4', 4800 ) # sometimes COM9 on MD laptop
     else:
-      self.com = serial.Serial( '/dev/ttyUSB0', 4800 )
+      self.com = serial.Serial( '/dev/ttyUSB0', 38400 ) #4800 )
 
   def run(self):
     while self.shouldIRun.isSet():
@@ -164,7 +169,8 @@ class GPS( Thread ):
       self._logFile.flush()
       if self.verbose:
         print nmea
-      tmpCoord = parseGGA( nmea )
+#      tmpCoord = parseGGA( nmea )
+      tmpCoord = parsePTNL( nmea )
       if tmpCoord:
         self._coord = tmpCoord
         if self.verbose:

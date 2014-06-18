@@ -20,6 +20,7 @@
 import sys
 import math
 import itertools
+import datetime
 
 from can import CAN, ReplyLog, ReplyLogInputsOnly
 from localisation import SimpleOdometry, KalmanFilter
@@ -62,14 +63,24 @@ def sprayer( robot, left, right ):
   robot.can.sendData( 0x20C, [cmd] ) 
 
 g_ballsFile = None
+g_numBalls = 0
 def reportBall( coord ):
   global g_ballsFile
-  # TODO GPS position
-  # TODO real run only
+  global g_numBalls
+  if g_numBalls >= 5:
+    return
+  g_numBalls += 1
+# ['$PTNL', 'PJK', '160714.00', '061714', '+5746405.893', 'N', '+686285.539', 'E', '2', '08', '2.8', 'EHT+123.664', 'M']
+  assert len(coord) == 13, coord
+  assert coord[0] == '$PTNL', coord[0]
+  assert coord[1] == 'PJK', coord[1]
+  t = coord[2].split('.')[0]
+  d = coord[3]
   if g_ballsFile == None:
-    g_ballsFile = open( timeName( "logs/balls-eduro","txt"), "w")
-    g_ballsFile.write( "EDURO Team, CULS 2014\n" )
-  g_ballsFile.write( "%.3f, %.3f\n" % coord )
+    g_ballsFile = open( "logs/FRE-Task3_EduroTeam_" + d[4:]+d[:2]+d[2:4] + "_" + t + ".txt", "w")
+    g_ballsFile.write( "Team Name: Eduro Team\n" )
+    g_ballsFile.write( "Date and Time: %s.%s.20%s %s:%s:%s\n" % (d[2:4], d[:2], d[4:], t[:2], t[2:4], t[4:] ) )  # DD.MM.YYYY hh:mm:ss
+  g_ballsFile.write( ",".join(coord[4:8]) + "\n" ) # +5395463.576,N,+515092.943,E
   g_ballsFile.flush()
 
 
@@ -316,11 +327,11 @@ class CameraRow:
         print "WEED:", leftPip, rightPip
         if leftPip:
           xy = combinedPose(robot.localisation.pose(), (0,0.35,0))[:2]
-          reportBall( xy ) # TODO GPS data?
+          reportBall( robot.gpsData )
           viewlog.dumpBeacon( xy, color=(255,255,0) )
         if rightPip:
           xy = combinedPose(robot.localisation.pose(), (0,-0.35,0))[:2]
-          reportBall( xy ) # TODO GPS data?
+          reportBall( robot.gpsData )
           viewlog.dumpBeacon( xy, color=(255,255,0) )
         self.lastCamera.append( (self.counter + 0, leftPip, rightPip ) )
       else:
@@ -337,7 +348,7 @@ class FieldRobot:
 #    self.robot.fnSpeedLimitController = [self.robot.pauseSpeedFn] 
     self.robot.fnSpeedLimitController = [] 
     self.robot.addExtension( emergencyStopExtension )
-#    self.robot.attachGPS()
+    self.robot.attachGPS()
     self.robot.attachLaser( remission=True )
     self.robot.laser.stopOnExit = False  # for faster boot-up
     self.robot.attachCamera( cameraExe = "../robotchallenge/rc" ) # TODO what was used?!
@@ -379,7 +390,7 @@ class FieldRobot:
 
     try:
       # start GPS sooner to get position fix
-#      self.robot.gps.start()
+      self.robot.gps.start()
       self.robot.laser.start()
       self.waitForStart()
       if not self.robot.switchBlueSelected:
@@ -489,7 +500,7 @@ class FieldRobot:
     sprayer( self.robot, 0, 0 )         
     print "battery:", self.robot.battery
     self.robot.camera.requestStop()
-#    self.robot.gps.requestStop()
+    self.robot.gps.requestStop()
     self.robot.laser.requestStop()
 
 
@@ -593,8 +604,8 @@ class FieldRobot:
     if self.configFilename.startswith("cmd:"):
       return eval( self.configFilename[4:] )
 #    return self.ver2([-1,1]*10, detectWeeds = False, detectBlockedRow = False)  # Task1
-    return self.ver2( [2,-1,0,-2,3,2,0], detectWeeds = False, detectBlockedRow = True ) # Task2 S-2R-1L-0-2L-3R-2R-F
-#    return self.ver2([-1,1]*10, detectWeeds = True, detectBlockedRow = False)  # Task3
+#    return self.ver2( [2,-1,0,-2,3,2,0], detectWeeds = False, detectBlockedRow = True ) # Task2 S-2R-1L-0-2L-3R-2R-F
+    return self.ver2([-2,2]*10, detectWeeds = True, detectBlockedRow = False)  # Task3
 
 from eduromaxi import EduroMaxi
 import launcher
