@@ -67,7 +67,8 @@ bool Color::isGreen()
 
 bool Color::isYellow()
 {
-  return r()>100 && g()>100 && (b() < 0.7* r()) && (b() < 0.7 * g());
+//  return r()>100 && g()>100 && (b() < 0.7* r()) && (b() < 0.7 * g());
+  return r()>240 && g()>240;
 }
 
 
@@ -103,6 +104,8 @@ CameraBlobs::BlobType findPuckInFront( IplImage *image, CvRect* roi, BubbleStruc
     maxX = std::min( roi->x + roi->width, (int)(y*rightSlope + rightOffset));
     for( x = minX; x < maxX; x++ )
     {
+      if( x == 280 )
+        x += 140; // skip inside
       char* ptr = image->imageData+ 3*x+y*image->widthStep;
       Color c;
       c.setRGB( ptr[2], ptr[1], ptr[0] );
@@ -221,7 +224,8 @@ int main( int argc, char *argv[] )
 
 //  *roi = cvRect(54, 332, 207- 54, 447-332); // FRE2013
 //  *roi = cvRect(54, 332, 550, 447-332); // FRE2013
-  *roi = cvRect(0, 332, 639, 447-332); // FRE2013
+//  *roi = cvRect(0, 332, 639, 447-332); // FRE2014
+  *roi = cvRect(150, 332, 550-150, 447-332); // FRE2014
   CvRect* roi2 = new CvRect();
   *roi2 = cvRect(0,0,640,512);
 

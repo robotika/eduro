@@ -9,7 +9,8 @@ import sys
 import shutil
 import subprocess 
 
-BALL_SIZE_LIMIT = 100
+BALL_SIZE_LIMIT_MIN = 100
+BALL_SIZE_LIMIT_MAX = 150
 
 
 EXE = r"m:\git\eduro\c\Debug\rc.exe"
@@ -20,7 +21,8 @@ def isBall( path ):
   p.stdin.write("file "+path+'\n')
   p.stdin.write("quit\n")
   s = [int(x) for x in p.stdout.read().split()]
-  if s[0] > BALL_SIZE_LIMIT or s[1] > BALL_SIZE_LIMIT:
+  if (s[0] > BALL_SIZE_LIMIT_MIN and s[0] < BALL_SIZE_LIMIT_MAX) \
+      or (s[1] > BALL_SIZE_LIMIT_MIN and s[1] < BALL_SIZE_LIMIT_MAX):
     print path, s[:2]
     return True
   return False

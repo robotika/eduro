@@ -43,7 +43,9 @@ from camera import img2xy, timeName
 
 from hand import setupHandModule, handUp, handDown
 
-BALL_SIZE_LIMIT = 100
+BALL_SIZE_LIMIT_MIN = 100
+BALL_SIZE_LIMIT_MAX = 150
+
 MIN_GAP_SIZE = 4 #3 #5
 MAX_GAP_SIZE = 13 #17
 SLOW_DOWN_ANGLE = math.radians(15.0)
@@ -321,8 +323,8 @@ class CameraRow:
       if self.verbose and len(data) > 1:
         print data[1]
       cc = [int(x) for x in data[0].split()]
-      leftPip = (cc[0] > BALL_SIZE_LIMIT )
-      rightPip = (cc[1] > BALL_SIZE_LIMIT )
+      leftPip = (cc[0] > BALL_SIZE_LIMIT_MIN and cc[0] < BALL_SIZE_LIMIT_MAX)
+      rightPip = (cc[1] > BALL_SIZE_LIMIT_MIN and cc[1] < BALL_SIZE_LIMIT_MAX)
       if leftPip or rightPip:
         print "WEED:", leftPip, rightPip
         if leftPip:
