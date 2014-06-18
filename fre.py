@@ -69,7 +69,7 @@ g_numBalls = 0
 def reportBall( coord ):
   global g_ballsFile
   global g_numBalls
-  if g_numBalls >= 5:
+  if g_numBalls >= 5 or coord == None:
     return
   g_numBalls += 1
 # ['$PTNL', 'PJK', '160714.00', '061714', '+5746405.893', 'N', '+686285.539', 'E', '2', '08', '2.8', 'EHT+123.664', 'M']
