@@ -17,9 +17,11 @@ def recognizeDigits( frame ):
     if g_mser == None:
         g_mser = cv2.MSER( _delta = 1, _min_area=100, _max_area=3000 )
     contours = g_mser.detect(gray, None)
-#    for cnt in contours:
     cv2.drawContours(frame, contours, -1, (0,255,0), 3)
     cv2.imshow( 'image', frame )
+    level = 30
+    ret, binary = cv2.threshold( gray, level, 255, cv2.THRESH_BINARY )
+    cv2.imshow( 'bin', binary )
 
 if __name__ == "__main__": 
     if len(sys.argv) < 2:
