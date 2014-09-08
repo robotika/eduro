@@ -286,7 +286,7 @@ def checkColumn( laserData ):
       return True
   return False
 
-class SICKDay:
+class SICKRobotDay2014:
   def __init__( self, robot, code, verbose = False ):
     self.random = random.Random(0).uniform 
     self.robot = robot
@@ -295,7 +295,10 @@ class SICKDay:
     self.robot.attachEmergencyStopButton()
 #    self.robot.addExtension( displayGpsStatusExtension )
 #    self.robot.attachSonar()
+    
+    self.robot.attachCamera( cameraExe = "../digits/digits" )  
     self.robot.addExtension( cameraDataExtension )
+    self.robot.attachLaser()
     
     self.driver = Driver( self.robot, maxSpeed = 0.5, maxAngularSpeed = math.radians(180) )
 #    self.driver = Driver( self.robot, maxSpeed = 0.2, maxAngularSpeed = math.radians(180) )
@@ -657,55 +660,14 @@ class SICKDay:
     raise EmergencyStopException() # TODO: Introduce GameOverException as in Eurobot
 
 
+  def __call__( self ):
+    print "RUNNING:", self.code
+    return self.run()
 
-def sickday2010( robot, code, verbose = False ):
-  try:
-    print "SICK Day 2010 started"
-    contest = SICKDay( robot, code, verbose=verbose )
-    contest.run()
-  except EmergencyStopException, e:
-    print "EmergencyStopException"
-  except KeyboardInterrupt, e:
-    print "KeyboardInterrupt"
-    print e
-    return False
-  return True
 
 if __name__ == "__main__": 
-  if len(sys.argv) < 2:
-    print __doc__
-    sys.exit(-1)
-  code = sys.argv[1] # i.e. 123456789 or 876543210 or some other combinations for test
-  if len(sys.argv) > 2:
-    assert( sys.argv[2]=="--file" ) # ?? we do not support anything else, right? ... used to be also simulator
-    if len(sys.argv)> 4 and sys.argv[4]=='FF':
-      can = CAN( ReplyLogInputsOnly( sys.argv[3] ), skipInit = True )
-    else:
-      assertWrite = not (len(sys.argv) > 4 and sys.argv[4]=='F') 
-      can = CAN( ReplyLog( sys.argv[3], assertWrite=assertWrite ), skipInit = True ) 
-    robot = buildRobot( EduroMaxi( can=can ), attachedGPS = False, 
-        attachedLaser = True, attachedCamera = True,
-        replyLog=sys.argv[3] )
-    viewlog.viewLogFile = open( "view.log", "w" )
-    robot.addExtension( viewLogExtension )
-    robot.addExtension( viewCompassExtension )
-    robot.addExtension( viewPoseExtension )
-    view = ViewCameraExtension( os.path.dirname( sys.argv[3] ) )
-    robot.addExtension( view.viewCameraExtension ) 
-    laserViewer = LaserViewer( robot, distanceLimit = 2.5 )
-    robot.addExtension( laserViewer.viewLaserExtension )
-    sickday2010( robot, code, verbose = True )
-    sys.exit(0) 
-
-  can = CAN()
-  while 1:
-    can.relog('logs/s')
-    print starter.starter( can )
-    can.relog('logs/r')
-    robot = buildRobot( EduroMaxi(can), attachedGPS = False, 
-        attachedLaser = True, attachedCamera = True, cameraExe = "../digits/digits" )
-    if not sickday2010( robot, code ):
-      break
-    del robot # robot has switch to preoperation ... probably not a good idea
-
+  # code = sys.argv[1]  ... i.e. 123456789 or 876543210 or some other combinations for test
+  from eduromaxi import EduroMaxi
+  import launcher
+  launcher.launch(sys.argv, EduroMaxi, SICKRobotDay2014) # TODO add , configFn=setupHandModule)
 
