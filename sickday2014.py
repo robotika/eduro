@@ -27,7 +27,6 @@ from can import CAN, ReplyLog, ReplyLogInputsOnly
 import viewlog
 from viewlog import viewLogExtension, viewCompassExtension, viewPoseExtension
 from laseranalysis import LaserViewer, ObstacleAvoidance, roughness
-from magellan import displayGpsStatusExtension
 from vfh import VFH
 
 from ray_trace import combinedPose
@@ -685,7 +684,7 @@ if __name__ == "__main__":
       assertWrite = not (len(sys.argv) > 4 and sys.argv[4]=='F') 
       can = CAN( ReplyLog( sys.argv[3], assertWrite=assertWrite ), skipInit = True ) 
     robot = buildRobot( EduroMaxi( can=can ), attachedGPS = False, 
-        attachedLaser = True, attachedCamera = True, attachedTracker = False,
+        attachedLaser = True, attachedCamera = True,
         replyLog=sys.argv[3] )
     viewlog.viewLogFile = open( "view.log", "w" )
     robot.addExtension( viewLogExtension )
@@ -704,7 +703,7 @@ if __name__ == "__main__":
     print starter.starter( can )
     can.relog('logs/r')
     robot = buildRobot( EduroMaxi(can), attachedGPS = False, 
-        attachedLaser = True, attachedCamera = True, attachedTracker = False, cameraExe = "../digits/digits" )
+        attachedLaser = True, attachedCamera = True, cameraExe = "../digits/digits" )
     if not sickday2010( robot, code ):
       break
     del robot # robot has switch to preoperation ... probably not a good idea
