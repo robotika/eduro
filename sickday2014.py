@@ -293,28 +293,19 @@ class SICKRobotDay2014:
     self.verbose = verbose
     self.code = code
     self.robot.attachEmergencyStopButton()
-#    self.robot.addExtension( displayGpsStatusExtension )
-#    self.robot.attachSonar()
     
     self.robot.attachCamera( cameraExe = "../digits/digits" )  
     self.robot.addExtension( cameraDataExtension )
     self.robot.attachLaser()
     
     self.driver = Driver( self.robot, maxSpeed = 0.5, maxAngularSpeed = math.radians(180) )
-#    self.driver = Driver( self.robot, maxSpeed = 0.2, maxAngularSpeed = math.radians(180) )
     self.robot.localisation = SimpleOdometry()
     
     self.robot.laser.stopOnExit = False  # for faster boot-up
 
-    # Set the parameters for Visiir.
-#    if hasattr(self.robot.camera, "imageProc"): # It is a log otherwise
-#      self.robot.camera.imageProc.process.stdin.write( "set roi 70 140 500 280\n" ) # use the part inside the black circle.
-#      self.robot.camera.imageProc.process.stdin.write( "set size 126 70\n" ) # use a small image for faster processing.
 
   def run( self ):
     try:
-      # start GPS sooner to get position fix
-#      self.robot.gps.start()
       if getattr( self.robot.laser, 'startLaser', None ):
         # trigger rotation of the laser, low level function, ignore for log files
         print "Powering laser ON"
@@ -324,56 +315,11 @@ class SICKRobotDay2014:
       self.robot.camera.start()
       self.robot.localisation = SimpleOdometry()
       while True:
-        #self.ver0()
-        #self.ver1(verbose = self.verbose)
-        self.ver2(verbose = self.verbose)
-        #self.ver3(verbose = self.verbose)
-      
+        self.ver2(verbose = self.verbose)      
     except EmergencyStopException, e:
       print "EmergencyStopException"
-#    self.robot.gps.requestStop()
     self.robot.laser.requestStop()
     self.robot.camera.requestStop()
-
-  def ver0( self, verbose=False ):
-    obstacleAvoidance = ObstacleAvoidance( driver=self.driver, verbose=verbose ) # or robot, or driver??
-    self.robot.addExtension( obstacleAvoidance.updateExtension )
-    while 1:
-      for cmd in self.driver.goStraightG( 100.0 ):
-        cmd = obstacleAvoidance.verifyCommand( self.robot, cmd )
-        robot.setSpeedPxPa( *cmd )
-        robot.update()
-
-
-  def ver1( self, verbose=False ):
-    # follow the wall
-    cmd = (0,0)
-    while True:
-      if self.robot.laserData and len(self.robot.laserData) > 0:
-        bestVal = 10000
-        bestI = 0
-        for i in range(len(self.robot.laserData)):
-          val = self.robot.laserData[i]/1000.0
-          if val > 0 and val < bestVal:
-            bestVal = val
-            bestI = i
-        if verbose:
-          print bestI, bestVal
-        if bestI < 80:
-          cmd = ( 0, math.radians(-10) ) # behind you -> turn right
-        elif bestI > 100:
-          cmd = (0, math.radians(10) ) # in front of you -> turn left
-        else:
-          if bestVal < 0.3:
-            cmd = (0.2, math.radians(5) )
-          else:
-            cmd = (0.2, math.radians(-5) )
-      else:
-        cmd = (0,0)
-        
-      self.robot.setSpeedPxPa( *cmd )
-      self.robot.update()
-
 
 
   def goToDigit( self, digit, info = None ):
@@ -427,6 +373,7 @@ class SICKRobotDay2014:
     self.robot.beep = 0 
     self.robot.update()
     return True
+
 
   def turnWithWatchdog( self, angle, angularSpeed ):
     timeout = math.fabs(angle/angularSpeed) + 5.0 # for normal operation it looks likt 0.5s is sufficient
@@ -515,11 +462,13 @@ class SICKRobotDay2014:
       dist = 20.0/float(camInfo[1][2]) # TODO calibrate 
     return combinedPose( (pose[0], pose[1], pose[2]+dir), (dist, 0, 0) )
 
+
   def waypoint2dir( self, pose, waypoint ):
     "return direction to waypoint for current pose"
     absAngle = math.atan2(waypoint[1]-pose[1], waypoint[0]-pose[0])
     relAngle = absAngle - pose[2]
     return normalizeAnglePIPI(relAngle)
+
 
   def goToVfhDigit( self, digit, timeout, info = None ):
     TOLERATED_MISS = 0.2 # [m]
@@ -625,7 +574,6 @@ class SICKRobotDay2014:
             self.goVfh( self.random(2.0, 30.0) )
             if not self.turnWithWatchdog( math.radians(self.random(10, 180)), angularSpeed = math.radians(40) ):
               self.turnWithWatchdog( math.radians(self.random(-180, -10)), angularSpeed = math.radians(20) )
-
         except DigitFound, e:
           print "FOUND", digit, e.info
           self.robot.removeExtension( "DIGI" ) # so we won't get other exceptions
