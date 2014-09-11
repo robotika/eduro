@@ -34,6 +34,7 @@ from line import distance, Line
 from route import loadLatLonPts, Convertor
 
 import starter
+from hand import setupHandModule
 
 class ViewCameraExtension:
   def __init__( self, absPath ):
@@ -321,6 +322,12 @@ class SICKRobotDay2014:
     self.robot.laser.requestStop()
     self.robot.camera.requestStop()
 
+  def turnLights( self, on=True ):
+    cmd = 0
+    if on:
+      cmd = 1+2
+    self.robot.can.sendData( 0x20C, [cmd] ) 
+ 
 
   def goToDigit( self, digit, info = None ):
     # prepositions - digit visible and near
@@ -386,6 +393,13 @@ class SICKRobotDay2014:
         return False
     return True
 
+  def wait( self, duration ):
+    # TODO wait for detection
+    print "Waiting ..."
+    startTime = self.robot.time
+    while startTime + duration > self.robot.time:
+      self.robot.setSpeedPxPa( 0, 0 )
+      self.robot.update()
 
   def goVfh( self, timeout ):
     TOLERATED_MISS = 0.2 # [m]
@@ -559,7 +573,7 @@ class SICKRobotDay2014:
 
   def ver2( self, verbose=False ):
     # follow each number separaterly
-    print "ver2", self.code
+    print "ver2", self.code, self.robot.battery
     gameStartTime = self.robot.time
     for digit in self.code:
       digitMissionCompleted = False
@@ -581,27 +595,16 @@ class SICKRobotDay2014:
             digitMissionCompleted = True
             print "DIGIT", digit, "COMPLETED", self.robot.time-gameStartTime
             self.driver.stop()
+            self.turnLights(on=True)
+            self.wait(10.0)
+            self.turnLights(on=False)
             self.driver.goStraight(-0.2)
           else:
             print "DIGIT", digit, "FAILURE -> repeat"
             self.driver.stop()
             self.driver.goStraight(-0.2)
             self.turnWithWatchdog( math.radians(self.random(10, 180)), angularSpeed = math.radians(40) )
-    print 'Game over.'
-    for k in xrange(10):
-      self.robot.setSpeedPxPa(0.0, 0.0)
-      self.robot.update()
-    raise EmergencyStopException() # TODO: Introduce GameOverException as in Eurobot
-
-  def ver3( self, verbose=False ):
-    print "ver3 - test", self.code
-    gameStartTime = self.robot.time
-    for digit in self.code:
-      print "VFH GO TO", digit
-      self.goToVfhDigit( int(digit), 30.0, info=None )
-      print "VFH END", digit
-
-    print 'Game over.'
+    print 'Game over.', self.robot.battery
     for k in xrange(10):
       self.robot.setSpeedPxPa(0.0, 0.0)
       self.robot.update()
@@ -617,5 +620,5 @@ if __name__ == "__main__":
   # code = sys.argv[1]  ... i.e. 123456789 or 876543210 or some other combinations for test
   from eduromaxi import EduroMaxi
   import launcher
-  launcher.launch(sys.argv, EduroMaxi, SICKRobotDay2014) # TODO add , configFn=setupHandModule)
+  launcher.launch(sys.argv, EduroMaxi, SICKRobotDay2014, configFn=setupHandModule)
 
