@@ -316,7 +316,8 @@ class SICKRobotDay2014:
       self.robot.camera.start()
       self.robot.localisation = SimpleOdometry()
       while True:
-        self.ver2(verbose = self.verbose)      
+#        self.ver2(verbose = self.verbose)      
+        self.approachFeeder()
     except EmergencyStopException, e:
       print "EmergencyStopException"
     self.robot.laser.requestStop()
@@ -400,6 +401,33 @@ class SICKRobotDay2014:
     while startTime + duration > self.robot.time:
       self.robot.setSpeedPxPa( 0, 0 )
       self.robot.update()
+
+  def approachFeeder( self, timeout=60 ):
+    "robot should be within 1m of the feeder"
+    print "Approaching Feeder"
+    desiredDist = 0.4 #0.2
+    countOK = 0
+    startTime = self.robot.time
+    while startTime + timeout > self.robot.time:
+      if self.robot.laserData == None or len(self.robot.laserData) != 541:
+        self.robot.setSpeedPxPa( 0, 0 )
+      else:
+        minDist = min(self.robot.laserData[180:-180])/1000.
+        self.robot.setSpeedPxPa( min(self.driver.maxSpeed, minDist - desiredDist), 0 )
+        if abs(minDist - desiredDist) < 0.01:
+          countOK += 1
+        else:
+          countOK = 0
+        if countOK >= 10:
+          break
+      self.robot.update()
+    self.robot.setSpeedPxPa( 0, 0 )
+    self.robot.update()
+    print "done."
+    self.driver.turn( math.radians(180) )
+    # turn 180 degrees ( or other angles if we allow non-dirrect approaches
+
+
 
   def goVfh( self, timeout ):
     TOLERATED_MISS = 0.2 # [m]
@@ -613,6 +641,8 @@ class SICKRobotDay2014:
 
   def __call__( self ):
     print "RUNNING:", self.code
+    if self.code.startswith("cmd:"):
+      return eval( self.code[4:] ) 
     return self.run()
 
 
