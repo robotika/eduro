@@ -268,6 +268,28 @@ int clasifyDigit( CvSeq *contour, IplImage *debugImg=NULL )
   return -1;
 }
 
+bool isItTarget( CvSeq *contour, IplImage *debugImg=NULL )
+{
+  if ( contour->v_next )
+  {
+    double area = fabs( cvContourArea( contour ));
+    double subarea = 0.0;
+    // it has hole(s)
+    CvSeq* p = contour->v_next;
+    int i;
+    for( i = 0; p->h_next; i++ )
+    {
+      subarea += fabs( cvContourArea( p ));
+      p = p->h_next;
+    }
+    if( i >= 10 && i <= 12 )
+    {
+      return area < 2.5*subarea;
+    }
+  }
+  return false;
+}
+
 int findDigit( const char *filename, char *outFilename = 0 )
 {
   IplImage* img = cvLoadImage(filename);
@@ -319,6 +341,16 @@ int findDigit( const char *filename, char *outFilename = 0 )
 
     while( ptr )
     {
+      if( isItTarget( ptr ) )
+      {
+        CvRect rect = cvBoundingRect( ptr ); // Centroid would be better
+        fprintf( stdout, "('X', (%d,%d,%d,%d)),", rect.x+roi.x, rect.y+roi.y, rect.width, rect.height );
+        if( outFilename )
+        {
+          cvDrawContours( img, ptr, CV_RGB(0,0,255), CV_RGB(0,255,0), -1, 1, CV_AA, cvPoint(roi.x,roi.y) );
+        }
+      }
+
       int digit = clasifyDigit( ptr );
       if( digit != -1 )
       {

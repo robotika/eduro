@@ -405,15 +405,28 @@ class SICKRobotDay2014:
   def approachFeeder( self, timeout=60 ):
     "robot should be within 1m of the feeder"
     print "Approaching Feeder"
-    desiredDist = 0.4 #0.2
+    desiredDist = 0.30 #0.4 #0.2
     countOK = 0
     startTime = self.robot.time
+    angularSpeed = 0
     while startTime + timeout > self.robot.time:
+      if self.robot.cameraData is not None and len(self.robot.cameraData)> 0 and self.robot.cameraData[0] is not None:
+        arr = eval(self.robot.cameraData[0])
+        angularSpeed = None
+        for a in arr:
+          for digit, (x,y,dx,dy) in a:
+            if digit == 'X':
+              angularSpeed = (320-(x+dx/2))/100.0
+              break
+        if angularSpeed is None:
+          angularSpeed = 0
+
       if self.robot.laserData == None or len(self.robot.laserData) != 541:
         self.robot.setSpeedPxPa( 0, 0 )
       else:
         minDist = min(self.robot.laserData[180:-180])/1000.
-        self.robot.setSpeedPxPa( min(self.driver.maxSpeed, minDist - desiredDist), 0 )
+        self.robot.setSpeedPxPa( min(self.driver.maxSpeed, minDist - desiredDist), angularSpeed )
+#        self.robot.setSpeedPxPa( 0, angularSpeed )
         if abs(minDist - desiredDist) < 0.01:
           countOK += 1
         else:
@@ -426,7 +439,7 @@ class SICKRobotDay2014:
     print "done."
     self.driver.turn( math.radians(180) )
     # turn 180 degrees ( or other angles if we allow non-dirrect approaches
-
+    self.wait(3)
 
 
   def goVfh( self, timeout ):
