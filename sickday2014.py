@@ -405,7 +405,7 @@ class SICKRobotDay2014:
   def approachFeeder( self, timeout=60 ):
     "robot should be within 1m of the feeder"
     print "Approaching Feeder"
-    desiredDist = 0.30 #0.4 #0.2
+    desiredDist = 0.4 #0.2
     countOK = 0
     startTime = self.robot.time
     angularSpeed = 0
