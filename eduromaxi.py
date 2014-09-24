@@ -18,6 +18,7 @@ from eduro import emergencyStopExtension
 from os import path, sep
 from hand import handPositionExtension
 from rfid import RFID
+from barcode import BarcodeReader
 
 def processedRFID( rfidData ):
   if rfidData and len(rfidData) == 10:
@@ -63,6 +64,27 @@ class EduroMaxi( Robot ):
       self.registerDataSource( 'gps', SourceLogger( None, gpsSrcLog ).get )
     self.gpsData = None
     self.addExtension( gpsDataExtension )
+
+
+  def attachBarcodeReader(self):
+    if self.replyLog is None:
+      self.barcode = BarcodeReader()
+      name = timeName( "logs/src_barcode_", "log" )
+      if self.metaLog:
+        self.metaLog.write("BARCODELOG:\t" + name + "\n")
+        self.metaLog.flush()
+      self.registerDataSource( 'barcode', SourceLogger( self.barcode.getCode, name ).get )
+    else:
+      self.barcode = DummyGPS()
+      if self.metaLog:
+        barSrcLog = self.metaLogName( "BARCODELOG:" )
+      else:
+        barSrcLog = self.replyLog[:-18]+"src_barcode_"+self.replyLog[-17:]
+      print "BARCODELOG:", barSrcLog
+      self.registerDataSource( 'barcode', SourceLogger( None, barSrcLog ).get )
+    self.barcodeData = None
+    self.addExtension( barcodeDataExtension )
+
 
   def attachCamera(self, cameraExe=None, url="http://192.168.0.99/img.jpg", sleep=None):
     if self.replyLog is None:
@@ -212,6 +234,10 @@ def gpsDataExtension( robot, id, data ):
 
     if robot.localisation is not None:
       robot.localisation.updateGPS(data)
+
+def barcodeDataExtension( robot, id, data ):
+  if id=='barcode':
+    robot.barcodeData = data
 
 def cameraDataExtension( robot, id, data ):
   if id=='camera':

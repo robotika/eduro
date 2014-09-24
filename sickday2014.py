@@ -298,6 +298,8 @@ class SICKRobotDay2014:
     self.robot.attachCamera( cameraExe = "../digits/digits" )  
     self.robot.addExtension( cameraDataExtension )
     self.robot.attachLaser()
+    self.robot.attachLaser( index=2, remission=True, usb=True, errLog = self.robot.metaLog )
+    self.robot.attachBarcodeReader()
     
     self.driver = Driver( self.robot, maxSpeed = 0.5, maxAngularSpeed = math.radians(180) )
     self.robot.localisation = SimpleOdometry()
@@ -313,15 +315,22 @@ class SICKRobotDay2014:
         self.robot.laser.startLaser() 
       self.robot.waitForStart()
       self.robot.laser.start()  # laser also after start -- it should be already running
+      self.robot.laser2.start() 
       self.robot.camera.start()
+      self.robot.barcode.start()
       self.robot.localisation = SimpleOdometry()
       while True:
 #        self.ver2(verbose = self.verbose)      
+        code = self.waitForCode()
+        if code:
+          self.robot.toDisplay = '>'+ str(code)
         self.approachFeeder()
     except EmergencyStopException, e:
       print "EmergencyStopException"
     self.robot.laser.requestStop()
+    self.robot.laser2.requestStop() 
     self.robot.camera.requestStop()
+    self.robot.barcode.requestStop()
 
   def turnLights( self, on=True ):
     cmd = 0
@@ -440,6 +449,14 @@ class SICKRobotDay2014:
     self.driver.turn( math.radians(180) )
     # turn 180 degrees ( or other angles if we allow non-dirrect approaches
     self.wait(3)
+
+  def waitForCode( self, timeout=10 ):
+    startTime = self.robot.time
+    while startTime + timeout > self.robot.time:
+      if self.robot.barcodeData is not None:
+        return self.robot.barcodeData
+      self.robot.setSpeedPxPa( 0, 0 )
+      self.robot.update()
 
 
   def goVfh( self, timeout ):
