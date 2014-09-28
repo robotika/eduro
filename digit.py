@@ -2,7 +2,7 @@
 """
   Digit recognition - SICK Robot Day 2014
     usage:
-         ./digit.py <img filename>
+         ./digit.py <img filename|directory|log file>
 """
 
 import sys
@@ -54,6 +54,22 @@ def recognizeNavTarget( frame, level = 130 ):
 #    cv2.imshow( 'bin', binary )
     cv2.imshow( 'image', frame )
 
+
+def processLog( filename ):
+    f = open(filename)
+    while True:
+        num = f.readline()
+        line = f.readline()
+        if len(line) == 0:
+            break
+        cmd,imgFile = eval(line)
+        if imgFile is not None:
+            print imgFile
+            img = cv2.imread( os.path.dirname( filename ) + os.sep + imgFile.split('/')[-1] )
+            cv2.imshow( 'image', img )
+            cv2.waitKey(200)
+
+
 if __name__ == "__main__": 
     if len(sys.argv) < 2:
         print __doc__
@@ -63,6 +79,9 @@ if __name__ == "__main__":
 #        recognizeDigits( cv2.imread( sys.argv[1] ) )
         recognizeNavTarget( cv2.imread( sys.argv[1] ), int(sys.argv[2]) )
         cv2.waitKey(0)
+        sys.exit(0)
+    if path.endswith(".log"):
+        processLog( path )
         sys.exit(0)
     for name in os.listdir(path):
         if name.endswith(".jpg"):
