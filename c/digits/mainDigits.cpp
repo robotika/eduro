@@ -277,14 +277,14 @@ bool isItTarget( CvSeq *contour, IplImage *debugImg=NULL )
     // it has hole(s)
     CvSeq* p = contour->v_next;
     int i;
-    for( i = 0; p->h_next; i++ )
+    for( i = 0; p != NULL; i++ )
     {
       subarea += fabs( cvContourArea( p ));
       p = p->h_next;
     }
-    if( i >= 10 && i <= 12 )
+    if( i == 12 )
     {
-      return area < 2.5*subarea;
+      return area < 4000;
     }
   }
   return false;
@@ -303,6 +303,12 @@ int findDigit( const char *filename, char *outFilename = 0 )
   cvCvtColor(img, gray, CV_BGR2GRAY);
   IplImage* bin = cvCreateImage(cvGetSize(img), IPL_DEPTH_8U, 1);
   CvMemStorage* storage = cvCreateMemStorage(0);
+
+  // erosion
+  // IplConvKernel* cvCreateStructuringElementEx(int cols, int rows, int anchor_x, int anchor_y, int shape, int* values=NULL )
+  //IplConvKernel* element = cvCreateStructuringElementEx( 3, 3, 0, 0, cv::MORPH_RECT );
+  // void cvErode(const CvArr* src, CvArr* dst, IplConvKernel* element=NULL, int iterations=1)
+  cvErode( gray, gray ); // element – structuring element used for erosion; if element=Mat() , a 3 x 3 rectangular structuring element is used.
 
   if( outFilename )
   {
