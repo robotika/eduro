@@ -297,8 +297,10 @@ class SICKRobotDay2014:
     
     self.robot.attachCamera( cameraExe = "../digits/digits" )  
     self.robot.addExtension( cameraDataExtension )
-    self.robot.attachLaser()
-    self.robot.attachLaser( index=2, remission=True, usb=True, errLog = self.robot.metaLog )
+    self.robot.attachLaser( pose=((0.14, 0.0, 0.32), (0,0,0)) )
+    self.robot.attachLaser( index=2, remission=True, usb=True, 
+        pose=((0.19, 0.0, 0.055), tuple([math.radians(x) for x in (0, 180, 0)])), 
+        errLog = self.robot.metaLog )
     self.robot.attachBarcodeReader()
     
     self.driver = Driver( self.robot, maxSpeed = 0.5, maxAngularSpeed = math.radians(180) )
@@ -320,11 +322,7 @@ class SICKRobotDay2014:
       self.robot.barcode.start()
       self.robot.localisation = SimpleOdometry()
       while True:
-#        self.ver2(verbose = self.verbose)      
-        code = self.waitForCode()
-        if code:
-          self.robot.toDisplay = '>'+ str(code)
-        self.approachFeeder()
+        self.ver0(verbose = self.verbose)      
     except EmergencyStopException, e:
       print "EmergencyStopException"
     self.robot.laser.requestStop()
@@ -578,7 +576,7 @@ class SICKRobotDay2014:
           info = None
           for d in parseCameraData( self.robot.cameraData ):
             # TODO switch to goToDigit for large enough number
-            if d[0] == int(digit):
+            if d[0] == digit:
               info = d
           if info != None:
             countVerified += 1
@@ -629,39 +627,65 @@ class SICKRobotDay2014:
     self.robot.removeExtension( "PATH" )
 
 
-  def ver2( self, verbose=False ):
+  def goToCenterArea( self ):
+    for cmd in self.driver.goStraightG( 10.0 ):
+      # TODO parse laser data to find "local minima island"
+      # TODO VFH for collision avoidance
+      if self.robot.laserData == None or len(self.robot.laserData) != 541:
+        self.robot.setSpeedPxPa( 0, 0 )
+      else:
+        minDist = min([10000]+[x for x in self.robot.laserData[180:-180] if x > 0])/1000.
+        if minDist < 2.0:
+          break
+#        print minDist
+#        self.robot.setSpeedPxPa( min(self.driver.maxSpeed, minDist - desiredDist), angularSpeed )
+      self.robot.setSpeedPxPa( *cmd )
+      self.robot.update()
+#    self.robot.beep = 1
+    self.driver.stop()
+
+
+  def ver0( self, verbose=False ):
     # follow each number separaterly
     print "ver2", self.code, self.robot.battery
     gameStartTime = self.robot.time
-    for digit in self.code:
-      digitMissionCompleted = False
-      while not digitMissionCompleted:
-        print "LOOKING FOR digit =", digit
-        self.robot.toDisplay = '>' + digit
-        det = DigitDetecor( int(digit) )
-        self.robot.addExtension( det.updateExtension, "DIGI" )
-        try:
-          while True:
-            # "random" walk with purpose to find the number
-            self.goVfh( self.random(2.0, 30.0) )
-            if not self.turnWithWatchdog( math.radians(self.random(10, 180)), angularSpeed = math.radians(40) ):
-              self.turnWithWatchdog( math.radians(self.random(-180, -10)), angularSpeed = math.radians(20) )
-        except DigitFound, e:
-          print "FOUND", digit, e.info
-          self.robot.removeExtension( "DIGI" ) # so we won't get other exceptions
-          if self.goToDigit( digit, info=e.info ):
-            digitMissionCompleted = True
-            print "DIGIT", digit, "COMPLETED", self.robot.time-gameStartTime
-            self.driver.stop()
-            self.turnLights(on=True)
-            self.wait(10.0)
-            self.turnLights(on=False)
-            self.driver.goStraight(-0.2)
-          else:
-            print "DIGIT", digit, "FAILURE -> repeat"
-            self.driver.stop()
-            self.driver.goStraight(-0.2)
-            self.turnWithWatchdog( math.radians(self.random(10, 180)), angularSpeed = math.radians(40) )
+    while True:
+      self.goToCenterArea()
+      self.approachFeeder()
+      digit = self.waitForCode()
+      if digit is None:
+        # TODO go forward
+        # TODO shake
+        pass
+      else:
+        digitMissionCompleted = False
+        while not digitMissionCompleted:
+          print "LOOKING FOR digit =", digit
+          self.robot.toDisplay = '>' + str(digit)
+          det = DigitDetecor( digit )
+          self.robot.addExtension( det.updateExtension, "DIGI" )
+          try:
+            while True:
+              # "random" walk with purpose to find the number
+              self.goVfh( self.random(2.0, 30.0) )
+              if not self.turnWithWatchdog( math.radians(self.random(10, 180)), angularSpeed = math.radians(40) ):
+                self.turnWithWatchdog( math.radians(self.random(-180, -10)), angularSpeed = math.radians(20) )
+          except DigitFound, e:
+            print "FOUND", digit, e.info
+            self.robot.removeExtension( "DIGI" ) # so we won't get other exceptions
+            if self.goToDigit( digit, info=e.info ):
+              digitMissionCompleted = True
+              print "DIGIT", digit, "COMPLETED", self.robot.time-gameStartTime
+              self.driver.stop()
+              self.turnLights(on=True)
+              self.wait(10.0)
+              self.turnLights(on=False)
+              self.driver.goStraight(-0.2)
+            else:
+              print "DIGIT", digit, "FAILURE -> repeat"
+              self.driver.stop()
+              self.driver.goStraight(-0.2)
+              self.turnWithWatchdog( math.radians(self.random(10, 180)), angularSpeed = math.radians(40) )
     print 'Game over.', self.robot.battery
     for k in xrange(10):
       self.robot.setSpeedPxPa(0.0, 0.0)
