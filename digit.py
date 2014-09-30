@@ -73,6 +73,12 @@ def processLog( filename ):
         if len(line) == 0:
             break
         cmd,imgFile = eval(line)
+        if imgFile:
+            fout.write( imgFile.strip() + ' ' )
+        else:
+            fout.write( str(imgFile)+'\n' )
+        fout.flush()
+
         if imgFile is not None:
             print imgFile
             imgAbsPath = os.path.dirname( filename ) + os.sep + imgFile.split('/')[-1]            
