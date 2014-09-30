@@ -433,7 +433,7 @@ class SICKRobotDay2014:
       if self.robot.laserData == None or len(self.robot.laserData) != 541:
         self.robot.setSpeedPxPa( 0, 0 )
       else:
-        minDist = min(self.robot.laserData[180:-180])/1000.
+        minDist = min([10000]+[x for x in self.robot.laserData[180:-180] if x > 0])/1000.
         self.robot.setSpeedPxPa( min(self.driver.maxSpeed, minDist - desiredDist), angularSpeed )
 #        self.robot.setSpeedPxPa( 0, angularSpeed )
         if abs(minDist - desiredDist) < 0.01:
