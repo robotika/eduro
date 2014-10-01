@@ -295,7 +295,9 @@ class SICKRobotDay2014:
     self.code = code
     self.robot.attachEmergencyStopButton()
     
-    self.robot.attachCamera( cameraExe = "../digits/digits" )  
+#    self.robot.attachCamera( cameraExe = "../digits/digits", 
+#        url = "http://192.168.0.99/image?res=full&x0=0&y0=0&x1=1600&y1=1200&quality=12&doublescan=0" )
+    self.robot.attachCamera( cameraExe = "../digits/digits" )
     self.robot.addExtension( cameraDataExtension )
     self.robot.attachLaser( pose=((0.14, 0.0, 0.32), (0,0,0)) )
     self.robot.attachLaser( index=2, remission=True, usb=True, 
@@ -341,7 +343,7 @@ class SICKRobotDay2014:
     # prepositions - digit visible and near
     prevMinDist = None
     columnChecked = False
-    self.robot.toDisplay = '>' + digit
+    self.robot.toDisplay = '>' + str(digit)
     oldCam = self.robot.cameraData
     countImages = 0
     countVerified = 0
@@ -352,7 +354,7 @@ class SICKRobotDay2014:
         if self.robot.cameraData and self.robot.cameraData[0]:
           info = None
           for d in parseCameraData( self.robot.cameraData ):
-            if d[0] == int(digit):
+            if d[0] == digit:
               info = d
           if info != None:
             countVerified += 1
@@ -446,7 +448,6 @@ class SICKRobotDay2014:
     print "done."
     self.driver.turn( math.radians(180) )
     # turn 180 degrees ( or other angles if we allow non-dirrect approaches
-    self.wait(3)
 
   def waitForCode( self, timeout=10 ):
     startTime = self.robot.time
@@ -647,17 +648,23 @@ class SICKRobotDay2014:
 
   def ver0( self, verbose=False ):
     # follow each number separaterly
-    print "ver2", self.code, self.robot.battery
+    print "ver0", self.code, self.robot.battery
     gameStartTime = self.robot.time
     while True:
       self.goToCenterArea()
       self.approachFeeder()
+      self.turnLights( on=True )
       digit = self.waitForCode()
+      self.turnLights( on=False )
       if digit is None:
-        # TODO go forward
-        # TODO shake
-        pass
-      else:
+        self.driver.goStraight(0.2)
+        # shake
+        while self.robot.barcodeData is None:
+          self.driver.turn( angle=math.radians(45), angularSpeed=math.radians(90) )
+          self.driver.turn( angle=math.radians(-90), angularSpeed=math.radians(90) )
+          self.driver.turn( angle=math.radians(45), angularSpeed=math.radians(90) )
+        digit = self.robot.barcodeData
+      if digit is not None:
         digitMissionCompleted = False
         while not digitMissionCompleted:
           print "LOOKING FOR digit =", digit
@@ -678,9 +685,8 @@ class SICKRobotDay2014:
               print "DIGIT", digit, "COMPLETED", self.robot.time-gameStartTime
               self.driver.stop()
               self.turnLights(on=True)
-              self.wait(10.0)
+              self.approachFeeder()
               self.turnLights(on=False)
-              self.driver.goStraight(-0.2)
             else:
               print "DIGIT", digit, "FAILURE -> repeat"
               self.driver.stop()
