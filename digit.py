@@ -11,6 +11,8 @@ import cv2
 from collections import defaultdict
 import subprocess
 
+import numpy as np
+
 DIGIT_EXE_PATH = r'm:\git\eduro\c\digits\Debug\digits.exe'
 DIGIT_CWD = r'm:\git\cvdrone\bin\vs2008'
 TMP_OUTPUT_PATH = r"m:\git\eduro\out.jpg"
@@ -43,10 +45,14 @@ def findParent( hierarchy ):
 
 def recognizeNavTarget( frame, level = 130 ):
     gray = cv2.cvtColor( frame, cv2.COLOR_BGR2GRAY )
+    kernel = np.ones( (3,3), np.uint8)
+    gray = cv2.erode( gray, kernel )
     ret, binary = cv2.threshold( gray, level, 255, cv2.THRESH_BINARY )
+    tmp = cv2.cvtColor( binary, cv2.COLOR_GRAY2BGR )
     contours, hierarchy = cv2.findContours( binary, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE )
     for sel in findParent( hierarchy ):
         cv2.drawContours(frame, [contours[sel]], -1, (0,255,0), 2)   
+        cv2.drawContours(tmp, [contours[sel]], -1, (0,255,0), 2)   
         M = cv2.moments( contours[sel] )
         cx = int(M['m10']/M['m00'])
         cy = int(M['m01']/M['m00'])        
@@ -56,8 +62,8 @@ def recognizeNavTarget( frame, level = 130 ):
 #      area = cv2.contourArea(cnt, oriented=False)
 #      print area
 
-#    cv2.imshow( 'bin', binary )
-    cv2.imshow( 'image', frame )
+    cv2.imshow( 'bin', tmp )
+#    cv2.imshow( 'image', frame )
 
 
 def processLog( filename ):
