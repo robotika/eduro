@@ -295,9 +295,9 @@ class SICKRobotDay2014:
     self.code = code
     self.robot.attachEmergencyStopButton()
     
-#    self.robot.attachCamera( cameraExe = "../digits/digits", 
-#        url = "http://192.168.0.99/image?res=full&x0=0&y0=0&x1=1600&y1=1200&quality=12&doublescan=0" )
-    self.robot.attachCamera( cameraExe = "../digits/digits" )
+    self.robot.attachCamera( cameraExe = "../digits/digits", 
+        url = "http://192.168.0.99/image?res=full&x0=352&y0=80&x1=992&y1=592&quality=12&doublescan=0" )
+#    self.robot.attachCamera( cameraExe = "../digits/digits" )
     self.robot.addExtension( cameraDataExtension )
     self.robot.attachLaser( pose=((0.14, 0.0, 0.32), (0,0,0)) )
     self.robot.attachLaser( index=2, remission=True, usb=True, 
