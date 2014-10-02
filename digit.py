@@ -37,9 +37,9 @@ def findParent( hierarchy ):
         parents[parent].append(i)
     ret = []
     for (k,v) in parents.items():
-        if len(v) > 10 and len(v) <= 12:
+        if len(v) == 12:
             print k, v, len(v)
-            ret.append( k )
+            ret.append( (k,v) )
     return ret
 
 
@@ -50,13 +50,15 @@ def recognizeNavTarget( frame, level = 130 ):
     ret, binary = cv2.threshold( gray, level, 255, cv2.THRESH_BINARY )
     tmp = cv2.cvtColor( binary, cv2.COLOR_GRAY2BGR )
     contours, hierarchy = cv2.findContours( binary, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE )
-    for sel in findParent( hierarchy ):
+    for sel,kids in findParent( hierarchy ):
         cv2.drawContours(frame, [contours[sel]], -1, (0,255,0), 2)   
         cv2.drawContours(tmp, [contours[sel]], -1, (0,255,0), 2)   
         M = cv2.moments( contours[sel] )
         cx = int(M['m10']/M['m00'])
         cy = int(M['m01']/M['m00'])        
         print "Center", (cx,cy)
+        areas = [cv2.contourArea( contours[c] ) for c in kids]
+        print sorted(areas)
 #    for cnt in contours:
 #        print cnt
 #      area = cv2.contourArea(cnt, oriented=False)
