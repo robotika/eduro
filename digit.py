@@ -51,21 +51,20 @@ def recognizeNavTarget( frame, level = 130 ):
     tmp = cv2.cvtColor( binary, cv2.COLOR_GRAY2BGR )
     contours, hierarchy = cv2.findContours( binary, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE )
     for sel,kids in findParent( hierarchy ):
-        cv2.drawContours(frame, [contours[sel]], -1, (0,255,0), 2)   
-        cv2.drawContours(tmp, [contours[sel]], -1, (0,255,0), 2)   
         M = cv2.moments( contours[sel] )
         cx = int(M['m10']/M['m00'])
         cy = int(M['m01']/M['m00'])        
         print "Center", (cx,cy)
-        areas = [cv2.contourArea( contours[c] ) for c in kids]
-        print sorted(areas)
-#    for cnt in contours:
-#        print cnt
-#      area = cv2.contourArea(cnt, oriented=False)
-#      print area
-
+        print sorted([cv2.contourArea( contours[c] ) for c in kids])
+        areas = sorted([(cv2.contourArea( contours[c] ),c) for c in kids])
+        for a,c in areas[:4]:
+            cv2.drawContours(tmp, [contours[c]], -1, (255,0,0), -1)   
+        for a,c in areas[4:8]:
+            cv2.drawContours(tmp, [contours[c]], -1, (0,220,0), -1)   
+        for a,c in areas[8:]:
+            cv2.drawContours(tmp, [contours[c]], -1, (0,0,220), -1)   
+    cv2.imwrite( "tmp.png", tmp )
     cv2.imshow( 'bin', tmp )
-#    cv2.imshow( 'image', frame )
 
 
 def processLog( filename ):
