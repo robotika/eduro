@@ -54,7 +54,7 @@ def recognizeNavTarget( frame, level = 130 ):
         M = cv2.moments( contours[sel] )
         cx = int(M['m10']/M['m00'])
         cy = int(M['m01']/M['m00'])        
-        print "Center", (cx,cy)
+        print "Center", (cx,cy), "area", M['m00']
         print sorted([cv2.contourArea( contours[c] ) for c in kids])
         areas = sorted([(cv2.contourArea( contours[c] ),c) for c in kids])
         for a,c in areas[:4]:
@@ -92,7 +92,7 @@ def processLog( filename ):
             subprocess.check_call( [DIGIT_EXE_PATH, imgAbsPath, TMP_OUTPUT_PATH], cwd = DIGIT_CWD, stdout=fout )
             img = cv2.imread( TMP_OUTPUT_PATH )
             cv2.imshow( 'image', img )
-            if cv2.waitKey(200) >= 0:
+            if cv2.waitKey(1000) >= 0:
                 break
     fout.close()
 

@@ -287,7 +287,7 @@ bool isItTarget( CvSeq *contour, IplImage *debugImg=NULL )
     }
     if( i == 12 )
     {
-      return area < 4000.0 && minSubarea > 0.0;
+      return area < 15000.0 && minSubarea > 0.0;
     }
   }
   return false;
