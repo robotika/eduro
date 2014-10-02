@@ -273,18 +273,21 @@ bool isItTarget( CvSeq *contour, IplImage *debugImg=NULL )
   if ( contour->v_next )
   {
     double area = fabs( cvContourArea( contour ));
-    double subarea = 0.0;
+    double minSubarea = 4000.0;
+    double subarea;
     // it has hole(s)
     CvSeq* p = contour->v_next;
     int i;
     for( i = 0; p != NULL; i++ )
     {
-      subarea += fabs( cvContourArea( p ));
+      subarea = fabs( cvContourArea( p ));
+      if( subarea < minSubarea )
+        minSubarea = subarea;
       p = p->h_next;
     }
     if( i == 12 )
     {
-      return area < 4000;
+      return area < 4000.0 && minSubarea > 0.0;
     }
   }
   return false;
