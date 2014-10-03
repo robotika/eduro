@@ -45,6 +45,15 @@ def findParent( hierarchy ):
 
 def recognizeNavTarget( frame, level = 130 ):
     gray = cv2.cvtColor( frame, cv2.COLOR_BGR2GRAY )
+    circles = cv2.HoughCircles( gray, cv2.cv.CV_HOUGH_GRADIENT, dp=1, minDist = 1 )
+    for cir in circles[0]:
+        cv2.circle(frame, (int(cir[0]),int(cir[1])), int(cir[2]), (0,0,255), 2 ),
+    cv2.imwrite( "tmp.jpg", frame )
+    cv2.imshow( 'img', frame )
+
+
+def recognizeNavTarget0( frame, level = 130 ):
+    gray = cv2.cvtColor( frame, cv2.COLOR_BGR2GRAY )
     kernel = np.ones( (3,3), np.uint8)
     gray = cv2.erode( gray, kernel )
     ret, binary = cv2.threshold( gray, level, 255, cv2.THRESH_BINARY )
