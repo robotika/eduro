@@ -68,10 +68,13 @@ def recognizeNavTarget( frame, level = 130 ):
             print "Center", (cx,cy), "area", M['m00']
             print sorted([cv2.contourArea( contours[c] ) for c in kids])
             areas = []
+            verify = []
             for c in kids:
                 x,y,w,h = cv2.boundingRect( contours[c] )
                 areas.append( (w*h, c) )
+                verify.append( (x,y,w,h,c) )
             areas = sorted( areas )
+            bigOnes = [c for a,c in areas[8:]]
             print areas
             for a,c in areas[:4]:
                 cv2.drawContours(tmp, [contours[c]], -1, (255,0,0), -1)   
@@ -79,7 +82,17 @@ def recognizeNavTarget( frame, level = 130 ):
                 cv2.drawContours(tmp, [contours[c]], -1, (0,220,0), -1)   
             for a,c in areas[8:]:
                 cv2.drawContours(tmp, [contours[c]], -1, (0,0,220), -1)   
-            ret = True
+            # verify that extremes are the bigger sub-contours
+            val, c1 = min( [ (x+y,c) for (x,y,w,h,c) in verify] )
+            val, c2 = max( [ (x+w+y+h,c) for (x,y,w,h,c) in verify] )
+            val, c3 = min( [ (x-y-h,c) for (x,y,w,h,c) in verify] )
+            val, c4 = max( [ (x+w-y,c) for (x,y,w,h,c) in verify] )
+            if sorted([c1,c2,c3,c4])==sorted(bigOnes):
+                ret = True
+            else:
+                print "!!!PRESS ANY KEY!!!"
+                cv2.imshow( 'bin', tmp )
+                cv2.waitKey(0)
     cv2.imwrite( "tmp.png", tmp )
     cv2.imshow( 'bin', tmp )
     return ret
@@ -110,7 +123,7 @@ def processLog( filename ):
             subprocess.check_call( [DIGIT_EXE_PATH, imgAbsPath, TMP_OUTPUT_PATH], cwd = DIGIT_CWD, stdout=fout )
             img = cv2.imread( TMP_OUTPUT_PATH )
             cv2.imshow( 'image', img )
-            if cv2.waitKey(1000) >= 0:
+            if cv2.waitKey(500) >= 0:
                 break
     fout.close()
 
