@@ -59,26 +59,30 @@ def recognizeNavTarget( frame, level = 130 ):
     ret, binary = cv2.threshold( gray, level, 255, cv2.THRESH_BINARY )
     tmp = cv2.cvtColor( binary, cv2.COLOR_GRAY2BGR )
     contours, hierarchy = cv2.findContours( binary, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE )
+    ret = False
     for sel,kids in findParent( hierarchy ):
         M = cv2.moments( contours[sel] )
-        cx = int(M['m10']/M['m00'])
-        cy = int(M['m01']/M['m00'])        
-        print "Center", (cx,cy), "area", M['m00']
-        print sorted([cv2.contourArea( contours[c] ) for c in kids])
-        areas = []
-        for c in kids:
-            x,y,w,h = cv2.boundingRect( contours[c] )
-            areas.append( (w*h, c) )
-        areas = sorted( areas )
-        print areas
-        for a,c in areas[:4]:
-            cv2.drawContours(tmp, [contours[c]], -1, (255,0,0), -1)   
-        for a,c in areas[4:8]:
-            cv2.drawContours(tmp, [contours[c]], -1, (0,220,0), -1)   
-        for a,c in areas[8:]:
-            cv2.drawContours(tmp, [contours[c]], -1, (0,0,220), -1)   
+        if min( [cv2.contourArea( contours[c] ) for c in kids]) > 0 and M['m00'] < 15000:
+            cx = int(M['m10']/M['m00'])
+            cy = int(M['m01']/M['m00'])        
+            print "Center", (cx,cy), "area", M['m00']
+            print sorted([cv2.contourArea( contours[c] ) for c in kids])
+            areas = []
+            for c in kids:
+                x,y,w,h = cv2.boundingRect( contours[c] )
+                areas.append( (w*h, c) )
+            areas = sorted( areas )
+            print areas
+            for a,c in areas[:4]:
+                cv2.drawContours(tmp, [contours[c]], -1, (255,0,0), -1)   
+            for a,c in areas[4:8]:
+                cv2.drawContours(tmp, [contours[c]], -1, (0,220,0), -1)   
+            for a,c in areas[8:]:
+                cv2.drawContours(tmp, [contours[c]], -1, (0,0,220), -1)   
+            ret = True
     cv2.imwrite( "tmp.png", tmp )
     cv2.imshow( 'bin', tmp )
+    return ret
 
 
 def processLog( filename ):
@@ -131,9 +135,12 @@ if __name__ == "__main__":
         if name.endswith(".jpg"):
             print name
 #            recognizeDigits( cv2.imread( path+ os.sep+name ) )
-            recognizeNavTarget( cv2.imread( path+ os.sep+name ), threshold )
-            if cv2.waitKey(1000) != -1:
-                break
+            if recognizeNavTarget( cv2.imread( path+ os.sep+name ), threshold ):
+                if cv2.waitKey(1000) != -1:
+                    break
+            else:
+                if cv2.waitKey(10) != -1:
+                    break
 
 
 #-------------------------------------------------------------------
