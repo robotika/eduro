@@ -43,7 +43,7 @@ def findParent( hierarchy ):
     return ret
 
 
-def recognizeNavTarget( frame, level = 130 ):
+def recognizeNavTargetHC( frame, level = 130 ):
     gray = cv2.cvtColor( frame, cv2.COLOR_BGR2GRAY )
     circles = cv2.HoughCircles( gray, cv2.cv.CV_HOUGH_GRADIENT, dp=1, minDist = 1 )
     for cir in circles[0]:
@@ -52,7 +52,7 @@ def recognizeNavTarget( frame, level = 130 ):
     cv2.imshow( 'img', frame )
 
 
-def recognizeNavTarget0( frame, level = 130 ):
+def recognizeNavTarget( frame, level = 130 ):
     gray = cv2.cvtColor( frame, cv2.COLOR_BGR2GRAY )
     kernel = np.ones( (3,3), np.uint8)
     gray = cv2.erode( gray, kernel )
@@ -65,7 +65,12 @@ def recognizeNavTarget0( frame, level = 130 ):
         cy = int(M['m01']/M['m00'])        
         print "Center", (cx,cy), "area", M['m00']
         print sorted([cv2.contourArea( contours[c] ) for c in kids])
-        areas = sorted([(cv2.contourArea( contours[c] ),c) for c in kids])
+        areas = []
+        for c in kids:
+            x,y,w,h = cv2.boundingRect( contours[c] )
+            areas.append( (w*h, c) )
+        areas = sorted( areas )
+        print areas
         for a,c in areas[:4]:
             cv2.drawContours(tmp, [contours[c]], -1, (255,0,0), -1)   
         for a,c in areas[4:8]:
@@ -111,9 +116,12 @@ if __name__ == "__main__":
         print __doc__
         sys.exit(-1)
     path = sys.argv[1]
+    threshold = 80
+    if len(sys.argv) > 2:
+        threshold = int(sys.argv[2])
     if path.endswith(".jpg"):
 #        recognizeDigits( cv2.imread( sys.argv[1] ) )
-        recognizeNavTarget( cv2.imread( sys.argv[1] ), int(sys.argv[2]) )
+        recognizeNavTarget( cv2.imread( sys.argv[1] ), threshold )
         cv2.waitKey(0)
         sys.exit(0)
     if path.endswith(".log"):
@@ -123,8 +131,8 @@ if __name__ == "__main__":
         if name.endswith(".jpg"):
             print name
 #            recognizeDigits( cv2.imread( path+ os.sep+name ) )
-            recognizeNavTarget( cv2.imread( path+ os.sep+name ) )
-            if cv2.waitKey(300) != -1:
+            recognizeNavTarget( cv2.imread( path+ os.sep+name ), threshold )
+            if cv2.waitKey(1000) != -1:
                 break
 
 
