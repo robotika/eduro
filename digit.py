@@ -75,6 +75,7 @@ def recognizeNavTarget( frame, level = 130 ):
                 verify.append( (x,y,w,h,c) )
             areas = sorted( areas )
             bigOnes = [c for a,c in areas[8:]]
+            midOnes = [c for a,c in areas[4:8]]
             print areas
             for a,c in areas[:4]:
                 cv2.drawContours(tmp, [contours[c]], -1, (255,0,0), -1)   
@@ -88,11 +89,17 @@ def recognizeNavTarget( frame, level = 130 ):
             val, c3 = min( [ (x-y-h,c) for (x,y,w,h,c) in verify] )
             val, c4 = max( [ (x+w-y,c) for (x,y,w,h,c) in verify] )
             if sorted([c1,c2,c3,c4])==sorted(bigOnes):
-                ret = True
-            else:
-                print "!!!PRESS ANY KEY!!!"
-                cv2.imshow( 'bin', tmp )
-                cv2.waitKey(0)
+                verify = [ (x,y,w,h,c) for (x,y,w,h,c) in verify if c not in bigOnes]
+                val, c1 = min( [ (x+y,c) for (x,y,w,h,c) in verify] )
+                val, c2 = max( [ (x+w+y+h,c) for (x,y,w,h,c) in verify] )
+                val, c3 = min( [ (x-y-h,c) for (x,y,w,h,c) in verify] )
+                val, c4 = max( [ (x+w-y,c) for (x,y,w,h,c) in verify] )
+                if sorted([c1,c2,c3,c4])==sorted(midOnes):
+                    ret = True
+                else:
+                    print "!!!PRESS ANY KEY!!!"
+                    cv2.imshow( 'bin', tmp )
+                    cv2.waitKey(0)
     cv2.imwrite( "tmp.png", tmp )
     cv2.imshow( 'bin', tmp )
     return ret
@@ -144,16 +151,16 @@ if __name__ == "__main__":
     if path.endswith(".log"):
         processLog( path )
         sys.exit(0)
-    for name in os.listdir(path):
-        if name.endswith(".jpg"):
-            print name
-#            recognizeDigits( cv2.imread( path+ os.sep+name ) )
-            if recognizeNavTarget( cv2.imread( path+ os.sep+name ), threshold ):
-                if cv2.waitKey(1000) != -1:
-                    break
-            else:
-                if cv2.waitKey(10) != -1:
-                    break
+    for (dirpath, dirnames, filenames) in os.walk(path):
+        for name in filenames:
+            if name.endswith(".jpg"):
+                print name
+                if recognizeNavTarget( cv2.imread( dirpath+ os.sep+name ), threshold ):
+                    if cv2.waitKey(1000) != -1:
+                        break
+                else:
+                    if cv2.waitKey(10) != -1:
+                        break
 
 
 #-------------------------------------------------------------------
