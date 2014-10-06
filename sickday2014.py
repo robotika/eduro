@@ -713,8 +713,9 @@ class SICKRobotDay2014:
               digitMissionCompleted = True
               print "DIGIT", digit, "COMPLETED", self.robot.time-gameStartTime
               self.driver.stop()
-              self.turnLights(on=True)
               self.approachFeeder()
+              self.turnLights(on=True)
+              self.wait( 10.0 )
               self.turnLights(on=False)
             else:
               print "DIGIT", digit, "FAILURE -> repeat"
