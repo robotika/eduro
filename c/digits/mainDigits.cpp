@@ -310,6 +310,8 @@ bool isItTarget( CvSeq *contour, IplImage *debugImg=NULL )
         
         for( last = 8; last <= 12; last += 4 )
         {
+          std::vector<unsigned int> bestArr;
+
           best = 0;
           for( i = 0; i < last; i++ )
           {
@@ -318,6 +320,7 @@ bool isItTarget( CvSeq *contour, IplImage *debugImg=NULL )
           }
           if( best < last - 4 )
             return false;
+          bestArr.push_back( best );
           
           best = 0;
           for( i = 0; i < last; i++ )
@@ -327,6 +330,7 @@ bool isItTarget( CvSeq *contour, IplImage *debugImg=NULL )
           }
           if( best < last - 4 )
             return false;
+          bestArr.push_back( best );
 
           best = 0;
           for( i = 0; i < last; i++ )
@@ -336,6 +340,7 @@ bool isItTarget( CvSeq *contour, IplImage *debugImg=NULL )
           }
           if( best < last - 4 )
             return false;
+          bestArr.push_back( best );
           
           best = 0;
           for( i = 0; i < last; i++ )
@@ -345,6 +350,15 @@ bool isItTarget( CvSeq *contour, IplImage *debugImg=NULL )
           }
           if( best < last - 4 )
             return false;
+          bestArr.push_back( best );
+
+          // now shold be bestArr uniqe permutation last-4, last-3, last-2, last-1
+          std::sort( bestArr.begin(), bestArr.end() );
+          for( i = 0; i < bestArr.size(); i++ )
+          {
+            if( bestArr[i] != last - 4 + i )
+              return false;
+          }
         }
 
         return true;
