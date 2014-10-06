@@ -306,41 +306,46 @@ bool isItTarget( CvSeq *contour, IplImage *debugImg=NULL )
         }
         std::sort( bb.begin(), bb.end(), SmallerArea() );
 
-        int best = 0;
-        for( i = 0; i < bb.size(); i++ )
-        {
-          if( bb[i].x + bb[i].y < bb[best].x + bb[best].y )
-            best = i;
-        }
-        if( best < 8 )
-          return false;
+        unsigned int best, last;
         
-        best = 0;
-        for( i = 0; i < bb.size(); i++ )
+        for( last = 8; last <= 12; last += 4 )
         {
-          if( bb[i].x + bb[i].y + bb[i].height + bb[i].width > bb[best].x + bb[best].y + bb[best].height + bb[best].width )
-            best = i;
-        }
-        if( best < 8 )
-          return false;
+          best = 0;
+          for( i = 0; i < last; i++ )
+          {
+            if( bb[i].x + bb[i].y < bb[best].x + bb[best].y )
+              best = i;
+          }
+          if( best < last - 4 )
+            return false;
+          
+          best = 0;
+          for( i = 0; i < last; i++ )
+          {
+            if( bb[i].x + bb[i].y + bb[i].height + bb[i].width > bb[best].x + bb[best].y + bb[best].height + bb[best].width )
+              best = i;
+          }
+          if( best < last - 4 )
+            return false;
 
-        best = 0;
-        for( i = 0; i < bb.size(); i++ )
-        {
-          if( bb[i].x - bb[i].y - bb[i].height < bb[best].x - bb[best].y - bb[best].height )
-            best = i;
+          best = 0;
+          for( i = 0; i < last; i++ )
+          {
+            if( bb[i].x - bb[i].y - bb[i].height < bb[best].x - bb[best].y - bb[best].height )
+              best = i;
+          }
+          if( best < last - 4 )
+            return false;
+          
+          best = 0;
+          for( i = 0; i < last; i++ )
+          {
+            if( bb[i].x + bb[i].width - bb[i].y > bb[best].x + bb[best].width - bb[best].y )
+              best = i;
+          }
+          if( best < last - 4 )
+            return false;
         }
-        if( best < 8 )
-          return false;
-        
-        best = 0;
-        for( i = 0; i < bb.size(); i++ )
-        {
-          if( bb[i].x + bb[i].width - bb[i].y > bb[best].x + bb[best].width - bb[best].y )
-            best = i;
-        }
-        if( best < 8 )
-          return false;
 
         return true;
       }
