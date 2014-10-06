@@ -418,23 +418,52 @@ class SICKRobotDay2014:
     countOK = 0
     startTime = self.robot.time
     angularSpeed = 0
+    prevPose = None
+    prevName = None
+    prevLaser = None
+    target = None
     while startTime + timeout > self.robot.time:
       if self.robot.cameraData is not None and len(self.robot.cameraData)> 0 and self.robot.cameraData[0] is not None:
-        arr = eval(self.robot.cameraData[0])
-        angularSpeed = None
-        for a in arr:
-          for digit, (x,y,dx,dy) in a:
-            if digit == 'X':
-              angularSpeed = (320-(x+dx/2))/100.0
-              break
+        if prevName != self.robot.cameraData[1]:
+#          print prevName, self.robot.localisation.pose()
+          prevName = self.robot.cameraData[1]
+          if prevPose is None:
+            prevPose = self.robot.localisation.pose()
+            prevLaser = self.robot.laserData[:]
+          arr = eval(self.robot.cameraData[0])
+          angularSpeed = None
+          for a in arr:
+            for digit, (x,y,dx,dy) in a:
+              if digit == 'X':
+                angularSpeed = (320-(x+dx/2))/100.0
+#                print "angularSpeed", math.degrees(angularSpeed), self.robot.cameraData[1], (x,y,dx,dy)
+                centerX = 320
+                angle = ((x+dx/2)-centerX)*0.002454369260617026
+                dist = prevLaser[int(angle/2.)+271]/1000.
+#                print dist
+                t = combinedPose( (prevPose[0], prevPose[1], prevPose[2]+angle), (dist,0,0) )
+                target = (t[0],t[1])
+                viewlog.dumpBeacon( target, color=(255,128,0) )
+                break
+          prevPose = self.robot.localisation.pose()
+          prevLaser = self.robot.laserData[:]
         if angularSpeed is None:
           angularSpeed = 0
+
+      if target is None or distance( target, self.robot.localisation.pose() ) < 0.3:
+        angularSpeed = 0.0
+      else:
+        pose = self.robot.localisation.pose()
+        angularSpeed = normalizeAnglePIPI( angleTo( pose, target) - pose[2] )
+#        print "target:", target, math.degrees(angularSpeed)
+
 
       if self.robot.laserData == None or len(self.robot.laserData) != 541:
         self.robot.setSpeedPxPa( 0, 0 )
       else:
         minDist = min([10000]+[x for x in self.robot.laserData[180:-180] if x > 0])/1000.
         self.robot.setSpeedPxPa( min(self.driver.maxSpeed, minDist - desiredDist), angularSpeed )
+#        print min(self.driver.maxSpeed, minDist - desiredDist)
 #        self.robot.setSpeedPxPa( 0, angularSpeed )
         if abs(minDist - desiredDist) < 0.01:
           countOK += 1
