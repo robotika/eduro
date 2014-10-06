@@ -16,6 +16,7 @@ import numpy as np
 DIGIT_EXE_PATH = r'm:\git\eduro\c\digits\Debug\digits.exe'
 DIGIT_CWD = r'm:\git\cvdrone\bin\vs2008'
 TMP_OUTPUT_PATH = r"m:\git\eduro\out.jpg"
+TMP_OUTPUT_LOG = r"m:\git\eduro\out_tmp.log"
 
 g_mser = None
 
@@ -118,20 +119,24 @@ def processLog( filename ):
         if len(line) == 0:
             break
         cmd,imgFile = eval(line)
-        if imgFile:
-            fout.write( imgFile.strip() + ' ' )
-        else:
-            fout.write( str(imgFile)+'\n' )
-        fout.flush()
 
         if imgFile is not None:
             print imgFile
             imgAbsPath = os.path.dirname( filename ) + os.sep + imgFile.split('/')[-1]            
-            subprocess.check_call( [DIGIT_EXE_PATH, imgAbsPath, TMP_OUTPUT_PATH], cwd = DIGIT_CWD, stdout=fout )
+            tmpLog = open( TMP_OUTPUT_LOG, "w" )
+            subprocess.check_call( [DIGIT_EXE_PATH, imgAbsPath, TMP_OUTPUT_PATH], cwd = DIGIT_CWD, stdout=tmpLog )
+            tmpLog.close()
+            tmpLog = open( TMP_OUTPUT_LOG )
+            buf = tmpLog.read()
+            fout.write( str( (buf, imgFile) ) + '\n' )
+            tmpLog.close()
             img = cv2.imread( TMP_OUTPUT_PATH )
             cv2.imshow( 'image', img )
             if cv2.waitKey(500) >= 0:
                 break
+        else:
+            fout.write( line )
+        fout.flush()
     fout.close()
 
 
