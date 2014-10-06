@@ -65,13 +65,14 @@ class SocketExtension( Thread ):
         self._data = self.receive() 
     except:
       print "SOCKET SERVER EXCEPTION"
-      traceback.print_exc(file=sys.stdout)
+      traceback.print_exc(file=sys.stderr)
       self.serverSocket.close()
       self.serverSocket = None
 
   def data( self ):
     self.lock.acquire()
     xy = self._data
+    self._data = None
     self.lock.release()
     return xy 
 
@@ -105,14 +106,16 @@ if __name__ == "__main__":
     sys.exit(2) 
   runAsServer = (sys.argv[1]=='server')
   s = SocketExtension( runAsServer )
-  if True: #runAsServer:
+  if runAsServer:
     while 1:
-      data = s.receive()
-      if data == None:
-        break
-      print data
+      data = s.data()
+      if data is not None:
+        print data
   else:
     s.send([1,2,3])
     s.send("Ahoj!")
     s.send( ("camera", ("img123.jpg", "".join([chr(i) for i in xrange(256)]) ) ) )
+    while 1:
+      line = sys.stdin.readline()
+      s.send( line )
 
