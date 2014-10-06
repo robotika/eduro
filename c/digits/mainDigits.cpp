@@ -4,6 +4,7 @@
 #include <vector>
 #include <cv.h>
 #include <highgui.h>
+#include <algorithm>
 
 const int THRESHOLD = 80; // was 100 parameter of the image thresholding
 const int THRESHOLD_STEP = 20; // test +/- THRESHOLD
@@ -268,6 +269,13 @@ int clasifyDigit( CvSeq *contour, IplImage *debugImg=NULL )
   return -1;
 }
 
+struct SmallerArea : public std::binary_function<CvRect, CvRect, bool> 
+{
+  bool operator()(const CvRect& left, const CvRect& right) const 
+  { return left.height * left.width < right.height * right.width; }     
+};
+
+
 bool isItTarget( CvSeq *contour, IplImage *debugImg=NULL )
 {
   if ( contour->v_next )
@@ -277,7 +285,7 @@ bool isItTarget( CvSeq *contour, IplImage *debugImg=NULL )
     double subarea;
     // it has hole(s)
     CvSeq* p = contour->v_next;
-    int i;
+    unsigned int i;
     for( i = 0; p != NULL; i++ )
     {
       subarea = fabs( cvContourArea( p ));
@@ -287,7 +295,55 @@ bool isItTarget( CvSeq *contour, IplImage *debugImg=NULL )
     }
     if( i == 12 )
     {
-      return area < 15000.0 && minSubarea > 0.0;
+      if( area < 15000.0 && minSubarea > 0.0 )
+      {
+        std::vector<CvRect> bb;
+        p = contour->v_next;
+        for( i = 0; p != NULL; i++ )
+        {
+          bb.push_back( cvBoundingRect( p ) );
+          p = p->h_next;
+        }
+        std::sort( bb.begin(), bb.end(), SmallerArea() );
+
+        int best = 0;
+        for( i = 0; i < bb.size(); i++ )
+        {
+          if( bb[i].x + bb[i].y < bb[best].x + bb[best].y )
+            best = i;
+        }
+        if( best < 8 )
+          return false;
+        
+        best = 0;
+        for( i = 0; i < bb.size(); i++ )
+        {
+          if( bb[i].x + bb[i].y + bb[i].height + bb[i].width > bb[best].x + bb[best].y + bb[best].height + bb[best].width )
+            best = i;
+        }
+        if( best < 8 )
+          return false;
+
+        best = 0;
+        for( i = 0; i < bb.size(); i++ )
+        {
+          if( bb[i].x - bb[i].y - bb[i].height < bb[best].x - bb[best].y - bb[best].height )
+            best = i;
+        }
+        if( best < 8 )
+          return false;
+        
+        best = 0;
+        for( i = 0; i < bb.size(); i++ )
+        {
+          if( bb[i].x + bb[i].width - bb[i].y > bb[best].x + bb[best].width - bb[best].y )
+            best = i;
+        }
+        if( best < 8 )
+          return false;
+
+        return true;
+      }
     }
   }
   return false;
