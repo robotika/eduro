@@ -18,18 +18,47 @@ DIGIT_CWD = r'm:\git\cvdrone\bin\vs2008'
 TMP_OUTPUT_PATH = r"m:\git\eduro\out.jpg"
 TMP_OUTPUT_LOG = r"m:\git\eduro\out_tmp.log"
 
-g_mser = None
+def fitsIn( (x,y,w,h), cnt ):
+    "return true if rectanble fits in given contour"
+    for p in cnt:
+        if  x < p[0][0] < x+w and y < p[0][1] < y+h:
+            return False
+    return True
+    
+def validDigitPosition( x, y, w, h ):
+    "can given bounding box contain a navigation number?"
+    # ax + by + c = 0
+    # points: (0,180), (240,0)
+    # 180b+c = 0 and 240a + c = 0, size = 300
+    v = 0.6*y + 0.8*h - 144.0
+    print v
+    return abs(v) < 10
 
-def recognizeDigits( frame ):
-    global g_mser
+def recognizeDigits( frame, level = 130 ):
     gray = cv2.cvtColor( frame, cv2.COLOR_BGR2GRAY )
-    if g_mser == None:
-        g_mser = cv2.MSER( _delta = 1, _min_area=100, _max_area=3000 )
-    contours = g_mser.detect(gray, None)
-    cv2.drawContours(frame, contours, -1, (0,255,0), 3)
-    cv2.imshow( 'image', frame )
     ret, binary = cv2.threshold( gray, level, 255, cv2.THRESH_BINARY )
-    cv2.imshow( 'bin', binary )
+    tmp = cv2.cvtColor( binary, cv2.COLOR_GRAY2BGR )
+    contours, hierarchy = cv2.findContours( binary, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE )
+    ret = False
+    c = None
+    for i,h in enumerate(hierarchy[0]):
+        n,p,child,parent = h
+        x,y,w,h = cv2.boundingRect( contours[i] )
+        if 20 < w < 140 and 20 < h < 180 and w < h < 2*w:
+#            print i, (x, y), (x+w, y+h), w, h
+            c = i
+            b = -1
+            if x > b and y > b and x+w < 640-b and y+h < 512-b:
+                if parent >= 0 and fitsIn( (x-b,y-b,w+2*b,h+2*b), contours[parent] ):
+                    if validDigitPosition( x, y, w, h ):
+                        cv2.drawContours(tmp, [contours[c]], -1, (0,255,0), 2)
+                        cv2.rectangle( tmp, (x,y), (x+w,y+h), color=(0,128,255), thickness=2 )
+                        ret = True
+    cv2.imshow( 'bin', tmp )
+    return ret
+
+
+
 
 def findParent( hierarchy ):
     parents = defaultdict( list )
@@ -149,8 +178,8 @@ if __name__ == "__main__":
     if len(sys.argv) > 2:
         threshold = int(sys.argv[2])
     if path.endswith(".jpg"):
-#        recognizeDigits( cv2.imread( sys.argv[1] ) )
-        recognizeNavTarget( cv2.imread( sys.argv[1] ), threshold )
+        recognizeDigits( cv2.imread( sys.argv[1] ), threshold )
+#        recognizeNavTarget( cv2.imread( sys.argv[1] ), threshold )
         cv2.waitKey(0)
         sys.exit(0)
     if path.endswith(".log"):
@@ -160,7 +189,8 @@ if __name__ == "__main__":
         for name in filenames:
             if name.endswith(".jpg"):
                 print name
-                if recognizeNavTarget( cv2.imread( dirpath+ os.sep+name ), threshold ):
+                if recognizeDigits( cv2.imread( dirpath+ os.sep+name ), threshold ):
+#                if recognizeNavTarget( cv2.imread( dirpath+ os.sep+name ), threshold ):
                     if cv2.waitKey(1000) != -1:
                         break
                 else:
