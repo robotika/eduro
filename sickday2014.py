@@ -438,7 +438,7 @@ class SICKRobotDay2014:
                 angularSpeed = (320-(x+dx/2))/100.0
 #                print "angularSpeed", math.degrees(angularSpeed), self.robot.cameraData[1], (x,y,dx,dy)
                 centerX = 320
-                angle = ((x+dx/2)-centerX)*0.002454369260617026
+                angle = (centerX-(x+dx/2))*0.002454369260617026
                 dist = prevLaser[int(angle/2.)+271]/1000.
 #                print dist
                 t = combinedPose( (prevPose[0], prevPose[1], prevPose[2]+angle), (dist,0,0) )
