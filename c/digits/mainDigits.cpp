@@ -368,6 +368,13 @@ bool isItTarget( CvSeq *contour, IplImage *debugImg=NULL )
   return false;
 }
 
+bool validDigitPosition( CvRect rect )
+{
+  double v = 0.6*rect.y + 0.8*rect.height - 144.0;
+  return fabs(v) < 20.0;
+}
+
+
 int findDigit( const char *filename, char *outFilename = 0 )
 {
   IplImage* img = cvLoadImage(filename);
@@ -439,30 +446,26 @@ int findDigit( const char *filename, char *outFilename = 0 )
       if( digit != -1 )
       {
         CvRect rect = cvBoundingRect( ptr );
-        fprintf( stdout, "(%d, (%d,%d,%d,%d)),", digit, rect.x+roi.x, rect.y+roi.y, rect.width, rect.height );
-
-        if( outFilename )
+        if( validDigitPosition( rect ) )
         {
-          CvMoments moments;
-          cvMoments( ptr, &moments );
-          //CvPoint pts[4] = { cvPoint(0,0), cvPoint(300,0), cvPoint(500,400), cvPoint(0,200) };
-          //CvRect frame = cvRect( 0, 0, img->width, img->height );
-          //CvSeq *refContour = ptr;
-          //matchContours( refContour, &frame, ptr, pts, storage );
-          //CvSeq *shiftContour = transformContour( ptr, &frame, pts, storage );
-//          cvDrawContours( img, shiftContour, CV_RGB(255,0,0), CV_RGB(0,255,0), -1, CV_FILLED, CV_AA, cvPoint(roi.x,roi.y) );
-          cvDrawContours( img, ptr, CV_RGB(255,0,0), CV_RGB(0,255,0), -1, 1, CV_AA, cvPoint(roi.x,roi.y) );
-          CvPoint c = cvPoint((int)(moments.m10/moments.m00)+roi.x, (int)(moments.m01/moments.m00)+roi.y);
-          cvCircle(img, c, 5, CV_RGB(255, 255, 0), 3);
+          fprintf( stdout, "(%d, (%d,%d,%d,%d)),", digit, rect.x+roi.x, rect.y+roi.y, rect.width, rect.height );
 
-          CvFont font;
-          cvInitFont( &font, CV_FONT_HERSHEY_DUPLEX, 1.0, 1.0 );
-          char buf[256];
-          sprintf( buf, " %d", digit );
-          c.x += (threshold-THRESHOLD)/THRESHOLD_STEP;
-          c.y += (threshold-THRESHOLD)/THRESHOLD_STEP;
-          cvPutText( img, buf, c, &font, CV_RGB(255,0,0));
+          if( outFilename )
+          {
+            CvMoments moments;
+            cvMoments( ptr, &moments );
+            cvDrawContours( img, ptr, CV_RGB(255,0,0), CV_RGB(0,255,0), -1, 1, CV_AA, cvPoint(roi.x,roi.y) );
+            CvPoint c = cvPoint((int)(moments.m10/moments.m00)+roi.x, (int)(moments.m01/moments.m00)+roi.y);
+            cvCircle(img, c, 5, CV_RGB(255, 255, 0), 3);
 
+            CvFont font;
+            cvInitFont( &font, CV_FONT_HERSHEY_DUPLEX, 1.0, 1.0 );
+            char buf[256];
+            sprintf( buf, " %d", digit );
+            c.x += (threshold-THRESHOLD)/THRESHOLD_STEP;
+            c.y += (threshold-THRESHOLD)/THRESHOLD_STEP;
+            cvPutText( img, buf, c, &font, CV_RGB(255,0,0));
+          }
         }
       }
 
