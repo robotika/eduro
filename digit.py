@@ -61,11 +61,14 @@ def recognizeDigits( frame, level = 130 ):
 
 
 def findParent( hierarchy ):
+    ret = []
+    if hierarchy is None or len(hierarchy) == 0:
+        return ret
+
     parents = defaultdict( list )
     for i,h in enumerate(hierarchy[0]):
         n,p,child,parent = h
         parents[parent].append(i)
-    ret = []
     for (k,v) in parents.items():
         if len(v) == 12:
             print k, v, len(v)
@@ -135,6 +138,27 @@ def recognizeNavTarget( frame, level = 130 ):
     return ret
 
 
+def recognizeNavTargetEx( frame, threshold, note=None ):
+    "handle multiple thresholds (for negative number)"
+    if threshold < 0:
+        detectedAt = []
+        for threshold in xrange(255):
+            if recognizeNavTarget( frame, threshold ):
+                detectedAt.append(threshold)
+                cv2.waitKey(10)
+            else:
+                cv2.waitKey(1)
+        print detectedAt
+        assert detectedAt==[] or detectedAt == range(detectedAt[0], detectedAt[-1]+1)
+        if detectedAt:
+            f = open("detect.txt",'a')
+            f.write( '%d\t%d\t' % (detectedAt[0], detectedAt[-1]) + str(note) + '\n')
+            f.close()
+        return len(detectedAt) > 0
+    else:
+        return recognizeNavTarget( frame, threshold )
+
+
 def processLog( filename ):
     f = open(filename)
 #    console = subprocess.Popen( [DIGIT_EXE_PATH,] , cwd = DIGIT_CWD, stdin=subprocess.PIPE, stdout=subprocess.PIPE )
@@ -179,17 +203,7 @@ if __name__ == "__main__":
         threshold = int(sys.argv[2])
     if path.endswith(".jpg"):
 #        recognizeDigits( cv2.imread( sys.argv[1] ), threshold )
-        if threshold < 0:
-            detectedAt = []
-            for threshold in xrange(255):
-                if recognizeNavTarget( cv2.imread( sys.argv[1] ), threshold ):
-                    detectedAt.append(threshold)
-                    cv2.waitKey(10)
-                else:
-                    cv2.waitKey(1)
-            print detectedAt
-        else:
-            recognizeNavTarget( cv2.imread( sys.argv[1] ), threshold )
+        recognizeNavTargetEx( cv2.imread( sys.argv[1] ), threshold )
         cv2.waitKey(0)
         sys.exit(0)
     if path.endswith(".log"):
@@ -200,7 +214,7 @@ if __name__ == "__main__":
             if name.endswith(".jpg"):
                 print name
 #                if recognizeDigits( cv2.imread( dirpath+ os.sep+name ), threshold ):
-                if recognizeNavTarget( cv2.imread( dirpath+ os.sep+name ), threshold ):
+                if recognizeNavTargetEx( cv2.imread( dirpath+ os.sep+name ), threshold, note=dirpath+os.sep+name ):
                     if cv2.waitKey(1000) != -1:
                         break
                 else:
