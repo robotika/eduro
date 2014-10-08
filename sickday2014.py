@@ -684,8 +684,7 @@ class SICKRobotDay2014:
             while True:
               # "random" walk with purpose to find the number
               self.goVfh( self.random(2.0, 30.0) )
-              if not self.turnWithWatchdog( math.radians(self.random(10, 180)), angularSpeed = math.radians(40) ):
-                self.turnWithWatchdog( math.radians(self.random(-180, -10)), angularSpeed = math.radians(20) )
+              self.turnWithWatchdog( math.radians(self.random(-180, 180)), angularSpeed = math.radians(20) )
           except DigitFound, e:
             print "FOUND", digit, e.info
             self.robot.removeExtension( "DIGI" ) # so we won't get other exceptions
