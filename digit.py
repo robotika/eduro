@@ -178,8 +178,18 @@ if __name__ == "__main__":
     if len(sys.argv) > 2:
         threshold = int(sys.argv[2])
     if path.endswith(".jpg"):
-        recognizeDigits( cv2.imread( sys.argv[1] ), threshold )
-#        recognizeNavTarget( cv2.imread( sys.argv[1] ), threshold )
+#        recognizeDigits( cv2.imread( sys.argv[1] ), threshold )
+        if threshold < 0:
+            detectedAt = []
+            for threshold in xrange(255):
+                if recognizeNavTarget( cv2.imread( sys.argv[1] ), threshold ):
+                    detectedAt.append(threshold)
+                    cv2.waitKey(10)
+                else:
+                    cv2.waitKey(1)
+            print detectedAt
+        else:
+            recognizeNavTarget( cv2.imread( sys.argv[1] ), threshold )
         cv2.waitKey(0)
         sys.exit(0)
     if path.endswith(".log"):
@@ -189,8 +199,8 @@ if __name__ == "__main__":
         for name in filenames:
             if name.endswith(".jpg"):
                 print name
-                if recognizeDigits( cv2.imread( dirpath+ os.sep+name ), threshold ):
-#                if recognizeNavTarget( cv2.imread( dirpath+ os.sep+name ), threshold ):
+#                if recognizeDigits( cv2.imread( dirpath+ os.sep+name ), threshold ):
+                if recognizeNavTarget( cv2.imread( dirpath+ os.sep+name ), threshold ):
                     if cv2.waitKey(1000) != -1:
                         break
                 else:
