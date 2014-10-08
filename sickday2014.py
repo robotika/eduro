@@ -263,30 +263,6 @@ def zeroCmd():
     yield (0,0) # never ending STOP
 
 
-def checkColumn( laserData ):
-  return True # not wall surface ... ignore
-  # beware 1000x int data :(
-#  width = 20 # i.e. +/- [deg]
-  width = 45 # i.e. +/- [deg]
-  leftXY = (math.cos(math.radians(width))*laserData[270+2*width], math.sin(math.radians(width))*laserData[270+2*width])
-  rightXY = (math.cos(math.radians(-width))*laserData[270-2*width], math.sin(math.radians(-width))*laserData[270-2*width])
-  line = Line( leftXY, rightXY )
-  first, last = None, None
-  for i in range(-width,+width):
-    p = (math.cos(math.radians(i))*laserData[270+2*i], math.sin(math.radians(i))*laserData[270+2*i])
-#    print line.signedDistance( p )/1000.0
-    if line.signedDistance( p )/1000.0 < -0.05:
-      if first is None:
-        first = p
-      else:
-        last = p
-  if first and last:
-    dist = distance(first, last)/1000.0
-    print "Dist", dist  # with of the column
-    if dist > 0.05 and dist < 0.15:
-      return True
-  return False
-
 class SICKRobotDay2014:
   def __init__( self, robot, code, verbose = False ):
     self.random = random.Random(0).uniform 
@@ -374,21 +350,11 @@ class SICKRobotDay2014:
           print "ERROR DIST", prevMinDist, minDist, oldCam
           return False
         prevMinDist = minDist
-        if minDist < 0.5 and not columnChecked: # TODO set reasonable distance
-          if not checkColumn( self.robot.laserData ):
-            print "Missing column"
-            return False
-          columnChecked = True
-        if minDist < 0.5: # slow down
-          cmd = (cmd[0]/2.0, cmd[1])
-        if minDist < 0.4: # stop
+        if minDist < 1.5:
           break
       self.robot.setSpeedPxPa( *cmd )
       self.robot.update()
-    self.robot.beep = 1
-    self.driver.stop()
-    self.robot.beep = 0 
-    self.robot.update()
+    self.approachFeeder( digitHelper=digit )
     return True
 
 
@@ -411,7 +377,7 @@ class SICKRobotDay2014:
       self.robot.setSpeedPxPa( 0, 0 )
       self.robot.update()
 
-  def approachFeeder( self, timeout=60 ):
+  def approachFeeder( self, timeout=60, digitHelper=None ):
     "robot should be within 1m of the feeder"
     print "Approaching Feeder"
     desiredDist = 0.4 #0.2
@@ -445,6 +411,20 @@ class SICKRobotDay2014:
                 target = (t[0],t[1])
                 viewlog.dumpBeacon( target, color=(255,128,0) )
                 break
+          if target is None and digitHelper is not None:
+            # if you do not have goal try to re-search old number
+            for a in arr:
+              for digit, (x,y,dx,dy) in a:
+                if digit == 'X':
+                  angularSpeed = (320-(x+dx/2))/100.0
+                  centerX = 320
+                  angle = (centerX-(x+dx/2))*0.002454369260617026
+                  dist = prevLaser[int(angle/2.)+271]/1000.
+                  t = combinedPose( (prevPose[0], prevPose[1], prevPose[2]+angle), (dist,0,0) )
+                  target = (t[0],t[1])
+                  viewlog.dumpBeacon( target, color=(255,0,255) )
+                  break
+
           prevPose = self.robot.localisation.pose()
           prevLaser = self.robot.laserData[:]
         if angularSpeed is None:
@@ -712,8 +692,6 @@ class SICKRobotDay2014:
             if self.goToDigit( digit, info=e.info ):
               digitMissionCompleted = True
               print "DIGIT", digit, "COMPLETED", self.robot.time-gameStartTime
-              self.driver.stop()
-              self.approachFeeder()
               self.turnLights(on=True)
               self.wait( 10.0 )
               self.turnLights(on=False)
