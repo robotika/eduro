@@ -14,6 +14,7 @@ class BarcodeReader( Thread ):
     Thread.__init__(self)
     self.f = open( deviceName, "rb")
     self.code = None
+    self.index = 1000 # just offset form 0-9 numbers, to avoid accidental mismatch
     self.shouldIRun = Event()
     self.shouldIRun.set()
 
@@ -28,7 +29,8 @@ class BarcodeReader( Thread ):
     if evType == 1: # keyboard event EV_KEY
       if evValue == 1: # pressed
         if 2 <= evCode <= 11:
-          return (evCode-1) % 10  # zero is 11
+          self.index += 1
+          return ((evCode-1) % 10, self.index)  # zero is 11
 
   def getCode( self ):
     tmp = self.code

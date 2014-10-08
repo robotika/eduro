@@ -482,7 +482,7 @@ class SICKRobotDay2014:
     startTime = self.robot.time
     while startTime + timeout > self.robot.time:
       if self.robot.barcodeData is not None:
-        return self.robot.barcodeData
+        return self.robot.barcodeData[0]
       self.robot.setSpeedPxPa( 0, 0 )
       self.robot.update()
 
@@ -692,7 +692,7 @@ class SICKRobotDay2014:
           self.driver.turn( angle=math.radians(45), angularSpeed=math.radians(90) )
           self.driver.turn( angle=math.radians(-90), angularSpeed=math.radians(90) )
           self.driver.turn( angle=math.radians(45), angularSpeed=math.radians(90) )
-        digit = self.robot.barcodeData
+        digit = self.robot.barcodeData[0]
       if digit is not None:
         digitMissionCompleted = False
         while not digitMissionCompleted:
