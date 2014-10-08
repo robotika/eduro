@@ -132,7 +132,7 @@ def recognizeNavTarget( frame, level = 130 ):
                 else:
                     print "!!!PRESS ANY KEY!!!"
                     cv2.imshow( 'bin', tmp )
-                    cv2.waitKey(0)
+                    cv2.waitKey(100) # blocking was not good for batch processing
     cv2.imwrite( "tmp.png", tmp )
     cv2.imshow( 'bin', tmp )
     return ret
@@ -149,10 +149,13 @@ def recognizeNavTargetEx( frame, threshold, note=None ):
             else:
                 cv2.waitKey(1)
         print detectedAt
-        assert detectedAt==[] or detectedAt == range(detectedAt[0], detectedAt[-1]+1)
+
         if detectedAt:
             f = open("detect.txt",'a')
-            f.write( '%d\t%d\t' % (detectedAt[0], detectedAt[-1]) + str(note) + '\n')
+            if detectedAt == range(detectedAt[0], detectedAt[-1]+1):
+                f.write( '%d\t%d\t' % (detectedAt[0], detectedAt[-1]) + str(note) + '\n')
+            else:
+                f.write( str(detectedAt) + '\t' + str(note) + '\n')
             f.close()
         return len(detectedAt) > 0
     else:
