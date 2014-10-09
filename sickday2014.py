@@ -36,6 +36,33 @@ from route import loadLatLonPts, Convertor
 import starter
 from hand import setupHandModule
 
+def computeLoadManeuver( minDistL, frontDist, minDistR ):
+  "compute rotation and backup distance as last maneuver near the ring"
+  print "minDist", minDistL, frontDist, minDistR
+  laserOffset = 0.15
+  bowlOffset = 0.4 - laserOffset
+  wallRingCenterDist = 0.25
+  if frontDist is None or min(minDistL,minDistR) >= frontDist:
+    # "asserts" for missing frontDist or smaller or equal to minDist - 
+    toTurn = math.radians(180)
+    toMove = 0.0
+  else:
+    minDist = min(minDistL, minDistR)
+    alpha = math.acos(minDist/frontDist)
+    A = math.sqrt(frontDist**2 - minDist**2) + abs(math.sin(alpha)*laserOffset)
+    B = minDist-wallRingCenterDist + math.cos(alpha)*laserOffset
+    print "AB", A, B
+    beta = math.atan2( A, B )
+    if minDistR < minDistL:
+      # i.e. wall on mine right side
+      print math.degrees(alpha), math.degrees(beta)
+      toTurn = math.radians(-180) + (beta - alpha)
+    else:
+      toTurn = math.radians(180) - (beta-alpha)
+    toMove = bowlOffset - math.hypot( A, B )
+  return toTurn, toMove
+
+
 class ViewCameraExtension:
   def __init__( self, absPath ):
     self.absPath = absPath
@@ -377,6 +404,7 @@ class SICKRobotDay2014:
       self.robot.setSpeedPxPa( 0, 0 )
       self.robot.update()
 
+
   def approachFeeder( self, timeout=60, digitHelper=None ):
     "robot should be within 1m of the feeder"
     print "Approaching Feeder"
@@ -388,6 +416,7 @@ class SICKRobotDay2014:
     prevName = None
     prevLaser = None
     target = None
+    frontDist, minDistL, minDistR = None, None, None
     while startTime + timeout > self.robot.time:
       if self.robot.cameraData is not None and len(self.robot.cameraData)> 0 and self.robot.cameraData[0] is not None:
         if prevName != self.robot.cameraData[1]:
@@ -441,7 +470,10 @@ class SICKRobotDay2014:
       if self.robot.laserData == None or len(self.robot.laserData) != 541:
         self.robot.setSpeedPxPa( 0, 0 )
       else:
-        minDist = min([10000]+[x for x in self.robot.laserData[180:-180] if x > 0])/1000.
+        minDistR = min([10000]+[x for x in self.robot.laserData[180:541/2] if x > 0])/1000.
+        minDistL = min([10000]+[x for x in self.robot.laserData[541/2:-180] if x > 0])/1000.
+        minDist = min(minDistL, minDistR)
+        frontDist = min([10000]+[x for x in self.robot.laserData[265:-265] if x > 0])/1000.
         self.robot.setSpeedPxPa( min(self.driver.maxSpeed, minDist - desiredDist), angularSpeed )
 #        print min(self.driver.maxSpeed, minDist - desiredDist)
 #        self.robot.setSpeedPxPa( 0, angularSpeed )
@@ -455,8 +487,13 @@ class SICKRobotDay2014:
     self.robot.setSpeedPxPa( 0, 0 )
     self.robot.update()
     print "done."
-    self.driver.turn( math.radians(180) )
-    # turn 180 degrees ( or other angles if we allow non-dirrect approaches
+
+    # compute proper rotation and backup distance
+    toTurn, toBackup = computeLoadManeuver( minDistL, frontDist, minDistR )
+    print "Suggestion: ", math.degrees(toTurn), toBackup
+    self.driver.turn( toTurn )
+    self.driver.goStraight( toBackup )
+
 
   def waitForCode( self, timeout=10 ):
     startTime = self.robot.time
