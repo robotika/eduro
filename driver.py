@@ -125,9 +125,9 @@ class Driver:
     if verbose:
       print "---- Driver.turn result(%d) ----" % int(math.degrees(angle))
 
-  def turn( self, angle, angularSpeed = None, radius = 0.0, timeout = None, withStop=True ):
+  def turn( self, angle, angularSpeed = None, radius = 0.0, timeout = None, withStop=True, verbose=False ):
     startTime = self.robot.time
-    for cmd in self.turnG( angle, angularSpeed, radius = radius, withStop=withStop ):
+    for cmd in self.turnG( angle, angularSpeed, radius = radius, withStop=withStop, verbose=verbose ):
       if timeout != None:
         if self.robot.time > startTime + timeout:
           return False

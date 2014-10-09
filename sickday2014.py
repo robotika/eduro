@@ -495,8 +495,8 @@ class SICKRobotDay2014:
     # compute proper rotation and backup distance
     toTurn, toBackup = computeLoadManeuver( minDistL, frontDist, minDistR )
     print "Suggestion: ", math.degrees(toTurn), toBackup
-    self.driver.turn( toTurn, angularSpeed = math.radians(20) )
-    self.driver.goStraight( toBackup )
+    self.driver.turn( toTurn, angularSpeed = math.radians(20), timeout=30, verbose=True )
+    self.driver.goStraight( toBackup, timeout=30 )
 
 
   def waitForCode( self, timeout=10 ):
