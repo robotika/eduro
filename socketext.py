@@ -55,19 +55,28 @@ class SocketExtension( Thread ):
 
   def run( self ):
     "wait only for the first client - delayed binding"
-    try:
-      self.serverSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-      self.serverSocket.bind((HOST, PORT))
-      self.serverSocket.listen(1)
-      self.socket, self.addr = self.serverSocket.accept() 
-      print 'Connected by', self.addr 
-      while self.shouldIRun.isSet():
-        self._data = self.receive() 
-    except:
-      print "SOCKET SERVER EXCEPTION"
-      traceback.print_exc(file=sys.stderr)
-      self.serverSocket.close()
-      self.serverSocket = None
+    self.serverSocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    self.serverSocket.bind((HOST, PORT))
+    while self.shouldIRun.isSet():
+      try:
+        print "serverSocket", self.serverSocket.gettimeout()
+        self.serverSocket.listen(1)
+        self.socket, self.addr = self.serverSocket.accept() 
+        print "socket", self.socket.gettimeout()
+        self.socket.settimeout(5.0)
+        print "socket", self.socket.gettimeout()
+        print 'Connected by', self.addr 
+        while self.shouldIRun.isSet():
+          self._data = self.receive() 
+      except:
+        print "SOCKET SERVER EXCEPTION"
+        traceback.print_exc(file=sys.stderr)
+        if self.socket:
+          self.socket.shutdown(socket.SHUT_RDWR)
+          self.socket.close()
+          self.socket = None
+    self.serverSocket.close()
+    self.serverSocket = None
 
   def data( self ):
     self.lock.acquire()
@@ -117,5 +126,15 @@ if __name__ == "__main__":
     s.send( ("camera", ("img123.jpg", "".join([chr(i) for i in xrange(256)]) ) ) )
     while 1:
       line = sys.stdin.readline()
-      s.send( line )
+      print "sending ...",
+      if s is None:
+        s = SocketExtension( runAsServer=False )
+      try:
+        s.send( line )
+      except:
+        print "CLIENT SOCKET EXCEPTION"
+        traceback.print_exc(file=sys.stderr)
+        print "terminate ..."
+        s = None
+      print "done."
 
