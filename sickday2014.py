@@ -39,14 +39,18 @@ from hand import setupHandModule
 def computeLoadManeuver( minDistL, frontDist, minDistR ):
   "compute rotation and backup distance as last maneuver near the ring"
   print "minDist", minDistL, frontDist, minDistR
-  laserOffset = 0.15
-  bowlOffset = 0.4 - laserOffset
+  laserZero = 0.045  
+  laserOffset = 0.11
+  bowlOffset = 0.31
   wallRingCenterDist = 0.25
   if frontDist is None or min(minDistL,minDistR) >= frontDist:
     # "asserts" for missing frontDist or smaller or equal to minDist - 
     toTurn = math.radians(180)
     toMove = 0.0
   else:
+    minDistL += laserZero
+    minDistR += laserZero
+    frontDist += laserZero
     minDist = min(minDistL, minDistR)
     alpha = math.acos(minDist/frontDist)
     A = math.sqrt(frontDist**2 - minDist**2) + abs(math.sin(alpha)*laserOffset)
@@ -491,7 +495,7 @@ class SICKRobotDay2014:
     # compute proper rotation and backup distance
     toTurn, toBackup = computeLoadManeuver( minDistL, frontDist, minDistR )
     print "Suggestion: ", math.degrees(toTurn), toBackup
-    self.driver.turn( toTurn )
+    self.driver.turn( toTurn, angularSpeed = math.radians(20) )
     self.driver.goStraight( toBackup )
 
 
@@ -706,9 +710,12 @@ class SICKRobotDay2014:
         self.driver.goStraight(0.2)
         # shake
         while self.robot.barcodeData is None:
-          self.driver.turn( angle=math.radians(45), angularSpeed=math.radians(90) )
-          self.driver.turn( angle=math.radians(-90), angularSpeed=math.radians(90) )
-          self.driver.turn( angle=math.radians(45), angularSpeed=math.radians(90) )
+          acc = self.robot.maxAngularAcc
+          self.robot.maxAngularAcc = acc*2
+          self.driver.turn( angle=math.radians(45), angularSpeed=math.radians(180) )
+          self.driver.turn( angle=math.radians(-90), angularSpeed=math.radians(180) )
+          self.driver.turn( angle=math.radians(45), angularSpeed=math.radians(180) )
+          self.robot.maxAngularAcc = acc
         digit = self.robot.barcodeData[0]
       if digit is not None:
         digitMissionCompleted = False
