@@ -34,21 +34,24 @@ int clasifyDigit( CvSeq *contour, IplImage *debugImg=NULL )
   if( rect.height < rect.width )
     return -1;
 
-  //// verify number border (in Germany only)
-  //if( contour->v_prev )
-  //{
-  //  CvMemStorage* tmpStorage = cvCreateMemStorage(0);
-  //  CvSeq* frameShape = cvApproxPoly( contour->v_prev, sizeof(CvContour), tmpStorage,
-  //              CV_POLY_APPROX_DP, cvContourPerimeter(contour->v_prev)*0.02, 0 );
-  //  if( debugImg && frameShape->total == 4 )
-  //    cvDrawContours( debugImg, frameShape, CV_RGB(255,0,0), CV_RGB(0,255,0), 0, 1, CV_AA, cvPoint(0,0) );
-  //  int total = frameShape->total;
-  //  cvReleaseMemStorage( &tmpStorage );
-  //  if( total != 4 ) // rectangle
-  //    return -1;
-  //}
-  //else
-  //  return -1; // there is nothing containing this frame
+  if( rect.height < 60 )
+    return -1; // look only for large numbers
+
+  // verify number border (in Germany only)
+  if( contour->v_prev )
+  {
+    CvMemStorage* tmpStorage = cvCreateMemStorage(0);
+    CvSeq* frameShape = cvApproxPoly( contour->v_prev, sizeof(CvContour), tmpStorage,
+                CV_POLY_APPROX_DP, cvContourPerimeter(contour->v_prev)*0.02, 0 );
+    if( debugImg && frameShape->total == 4 )
+      cvDrawContours( debugImg, frameShape, CV_RGB(255,0,0), CV_RGB(0,255,0), 0, 1, CV_AA, cvPoint(0,0) );
+    int total = frameShape->total;
+    cvReleaseMemStorage( &tmpStorage );
+    if( total != 4 ) // rectangle
+      return -1;
+  }
+  else
+    return -1; // there is nothing containing this frame
 
 
   CvMoments moments;
@@ -74,10 +77,22 @@ int clasifyDigit( CvSeq *contour, IplImage *debugImg=NULL )
       if( rect1.y > rect2.y )
       {
         double tmp = frac1; frac1 = frac2; frac2 = tmp;
+        CvRect rtmp = rect1; rect1 = rect2; rect2 = rtmp;
       }
 
       if( frac1 > 0.1 && frac1 < 0.2 && frac2 > 0.2 && frac2 < 0.3 )
-        return 8;
+      {
+        if( rect1.y + rect1.height < rect2.y )
+        {
+          if( rect1.width <= rect2.width && rect1.height <= rect2.height )
+          {
+            if( rect1.x >= rect2.x && rect1.x + rect1.width <= rect2.x + rect2.width )
+            {
+              return 8;
+            }
+          }
+        }
+      }
       return -1;
     }
     else
