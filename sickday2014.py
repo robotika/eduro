@@ -500,12 +500,16 @@ class SICKRobotDay2014:
 
 
   def waitForCode( self, timeout=10 ):
+    prevData = self.robot.barcodeData
+    print "Barcode before", prevData
     startTime = self.robot.time
     while startTime + timeout > self.robot.time:
-      if self.robot.barcodeData is not None:
+      if self.robot.barcodeData is not None and self.robot.barcodeData != prevData:
+        print "Barcode after", self.robot.barcodeData
         return self.robot.barcodeData[0]
       self.robot.setSpeedPxPa( 0, 0 )
       self.robot.update()
+    print "Barcode timeout", self.robot.barcodeData
 
 
   def goVfh( self, timeout ):
@@ -704,12 +708,14 @@ class SICKRobotDay2014:
       self.goToCenterArea()
       self.approachFeeder()
       self.turnLights( on=True )
-      digit = self.waitForCode()
+      digit = self.waitForCode( timeout=10 )
       self.turnLights( on=False )
       if digit is None:
         self.driver.goStraight(0.2)
         # shake
-        while self.robot.barcodeData is None:
+        prevCodeId = self.robot.barcodeData
+        while self.robot.barcodeData is None and self.robot.barcodeData != prevCodeId:
+          print "SHAKE", self.robot.barcodeData
           acc = self.robot.maxAngularAcc
           self.robot.maxAngularAcc = acc*2
           self.driver.turn( angle=math.radians(45), angularSpeed=math.radians(180) )
