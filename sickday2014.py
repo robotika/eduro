@@ -385,7 +385,9 @@ class SICKRobotDay2014:
           break
       self.robot.setSpeedPxPa( *cmd )
       self.robot.update()
-    self.approachFeeder( digitHelper=digit )
+    if not self.approachFeeder( digitHelper=digit, verifyTarget = True ):
+      self.driver.goStraight( -1.0, timeout=15 )
+      self.approachFeeder(  digitHelper=digit, verifyTarget = False )
     return True
 
 
@@ -409,9 +411,10 @@ class SICKRobotDay2014:
       self.robot.update()
 
 
-  def approachFeeder( self, timeout=60, digitHelper=None ):
+  def approachFeeder( self, timeout=60, digitHelper=None, verifyTarget=True ):
     "robot should be within 1m of the feeder"
     print "Approaching Feeder"
+    verified = False
     desiredDist = 0.4 #0.2
     countOK = 0
     startTime = self.robot.time
@@ -434,6 +437,7 @@ class SICKRobotDay2014:
           for a in arr:
             for digit, (x,y,dx,dy) in a:
               if digit == 'X':
+                verified = True
                 angularSpeed = (320-(x+dx/2))/100.0
 #                print "angularSpeed", math.degrees(angularSpeed), self.robot.cameraData[1], (x,y,dx,dy)
                 centerX = 320
@@ -492,11 +496,16 @@ class SICKRobotDay2014:
     self.robot.update()
     print "done."
 
+    if verifyTarget and not verified:
+      print "TARGET not verified!"
+      return False
+
     # compute proper rotation and backup distance
     toTurn, toBackup = computeLoadManeuver( minDistL, frontDist, minDistR )
     print "Suggestion: ", math.degrees(toTurn), toBackup
     self.driver.turn( toTurn, angularSpeed = math.radians(20), timeout=30, verbose=True )
     self.driver.goStraight( toBackup, timeout=30 )
+    return True
 
 
   def waitForCode( self, timeout=10 ):
@@ -706,7 +715,9 @@ class SICKRobotDay2014:
     gameStartTime = self.robot.time
     while True:
       self.goToCenterArea()
-      self.approachFeeder()
+      if not self.approachFeeder( verifyTarget = True ):
+        self.driver.goStraight( -1.0, timeout=15 )
+        self.approachFeeder( verifyTarget = False )
       self.turnLights( on=True )
       digit = self.waitForCode( timeout=10 )
       self.turnLights( on=False )
