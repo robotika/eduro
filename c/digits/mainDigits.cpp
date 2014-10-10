@@ -100,6 +100,7 @@ int clasifyDigit( CvSeq *contour, IplImage *debugImg=NULL )
       // reference values 0.203974, 0.310097/0.319935, 0.489391
       double subarea = fabs(cvContourArea( contour->v_next ));
       double frac = subarea/area;
+      CvRect subRect = cvBoundingRect(contour->v_next);
 //      printf( "subarea fraction: %lf\n", frac );
       if( frac < 0.25 )
       {
@@ -112,23 +113,28 @@ int clasifyDigit( CvSeq *contour, IplImage *debugImg=NULL )
           return 4;
         return -1;
       }
-      else if( frac > 0.4 )
-      {
-        return 0;
-      }
       else
       {
+        if( subRect.height > rect.height/2 )
+          return 0;
+
         // 6 and 9
         CvMoments holeMoments;
         cvMoments( contour->v_next, &holeMoments );
         if( moments.m01/moments.m00 < holeMoments.m01/holeMoments.m00 )
         {
           // hole has bigger Y (BEWARE OF SWAPPED Y-Coordinates!!!
-          return 6;
+          if( subRect.y > rect.y + rect.height/3 ) // 1/2 is too close
+            return 6;
+          else
+            return -1;
         }
         else
         {
-          return 9;
+          if( subRect.y+subRect.height < rect.y + 2*rect.height/3 ) // 1/2 is too close
+            return 9;
+          else
+            return -1;
         }
       }
     }
