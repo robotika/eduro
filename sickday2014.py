@@ -311,6 +311,7 @@ class SICKRobotDay2014:
         pose=((0.19, 0.0, 0.055), tuple([math.radians(x) for x in (0, 180, 0)])), 
         errLog = self.robot.metaLog )
     self.robot.attachBarcodeReader()
+    self.robot.attachRasPi()
     
     self.driver = Driver( self.robot, maxSpeed = 0.5, maxAngularSpeed = math.radians(180) )
     self.robot.localisation = SimpleOdometry()
@@ -329,6 +330,7 @@ class SICKRobotDay2014:
       self.robot.laser2.start() 
       self.robot.camera.start()
       self.robot.barcode.start()
+      self.robot.raspi.start()
       self.robot.localisation = SimpleOdometry()
       while True:
         self.ver0(verbose = self.verbose)      
@@ -338,6 +340,7 @@ class SICKRobotDay2014:
     self.robot.laser2.requestStop() 
     self.robot.camera.requestStop()
     self.robot.barcode.requestStop()
+    self.robot.raspi.requestStop()
 
   def turnLights( self, on=True ):
     cmd = 0

@@ -86,6 +86,26 @@ class EduroMaxi( Robot ):
     self.addExtension( barcodeDataExtension )
 
 
+  def attachRasPi(self):
+    if self.replyLog is None:
+      self.raspi = RasPi()
+      name = timeName( "logs/src_raspi_", "log" )
+      if self.metaLog:
+        self.metaLog.write("RASPILOG:\t" + name + "\n")
+        self.metaLog.flush()
+      self.registerDataSource( 'raspi', SourceLogger( self.raspi.getData, name ).get )
+    else:
+      self.raspi = DummyGPS()
+      if self.metaLog:
+        barSrcLog = self.metaLogName( "RASPILOG:" )
+      else:
+        barSrcLog = self.replyLog[:-18]+"src_raspi_"+self.replyLog[-17:]
+      print "RASPILOG:", barSrcLog
+      self.registerDataSource( 'raspi', SourceLogger( None, barSrcLog ).get )
+    self.raspiData = None
+    self.addExtension( raspiDataExtension )
+
+
   def attachCamera(self, cameraExe=None, url="http://192.168.0.99/img.jpg", sleep=None):
     if self.replyLog is None:
       if cameraExe:
@@ -238,6 +258,10 @@ def gpsDataExtension( robot, id, data ):
 def barcodeDataExtension( robot, id, data ):
   if id=='barcode':
     robot.barcodeData = data
+
+def raspiDataExtension( robot, id, data ):
+  if id=='raspi':
+    robot.raspiData = data
 
 def cameraDataExtension( robot, id, data ):
   if id=='camera':
