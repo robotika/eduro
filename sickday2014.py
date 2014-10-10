@@ -722,7 +722,7 @@ class SICKRobotDay2014:
         angle = math.radians( (minIndex-270)/2.0 )
         angle += math.radians(90)
         if abs(angle) < math.radians(45):
-          speed = 0.2
+          speed = 0.4
           if minDist < atDistance - 0.1:
             angle += math.radians(10)
           elif minDist > atDistance + 0.1:
@@ -737,9 +737,6 @@ class SICKRobotDay2014:
   def ver0( self, verbose=False ):
     # follow each number separaterly
     print "ver0", self.code, self.robot.battery
-    while True:
-      self.followWall( atDistance=1.5, timeout = 60.0 )
-
     gameStartTime = self.robot.time
     while True:
       self.goToCenterArea()
