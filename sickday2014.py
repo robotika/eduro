@@ -751,7 +751,7 @@ class SICKRobotDay2014:
         self.driver.goStraight(0.2)
         # shake
         prevCodeId = self.robot.barcodeData
-        while self.robot.barcodeData is None and self.robot.barcodeData != prevCodeId:
+        while self.robot.barcodeData == prevCodeId:
           print "SHAKE", self.robot.barcodeData
           acc = self.robot.maxAngularAcc
           self.robot.maxAngularAcc = acc*2
@@ -759,7 +759,10 @@ class SICKRobotDay2014:
           self.driver.turn( angle=math.radians(-90), angularSpeed=math.radians(180) )
           self.driver.turn( angle=math.radians(45), angularSpeed=math.radians(180) )
           self.robot.maxAngularAcc = acc
-        digit = self.robot.barcodeData[0]
+        if self.robot.barcodeData is None:
+          digit = None
+        else:
+          digit = self.robot.barcodeData[0]
       if digit is not None:
         digitMissionCompleted = False
         while not digitMissionCompleted:
