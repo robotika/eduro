@@ -524,7 +524,7 @@ class SICKRobotDay2014:
     print "Barcode timeout", self.robot.barcodeData
 
 
-  def goVfh( self, timeout ):
+  def goVfh( self, timeout, maxDist=None ):
     TOLERATED_MISS = 0.2 # [m]
     ANGULAR_THRESHOLD = math.radians(20) # [rad]
     ANGULAR_SPEED = math.radians(60) # [rad/s]
@@ -545,7 +545,11 @@ class SICKRobotDay2014:
 
     startTime = self.robot.time
     happyTime = self.robot.time
+    distTraveled = 0.0
     while self.robot.time < startTime + timeout:
+      if maxDist is not None and distTraveled > maxDist:
+        print "goVfh - maxDist reached"
+        break
       dir = vfh.navigate(goalDir, prevDir, pathFinder.obstacles)
       if dir is None or not pathFinder.isTraversable(dir):
         strategy = zeroCmd()
@@ -572,15 +576,15 @@ class SICKRobotDay2014:
         for (speed, angularSpeed) in strategy:
           self.robot.setSpeedPxPa( speed, angularSpeed )
           self.robot.update()
+          distTraveled += self.robot.lastDistStep
         happyTime = self.robot.time
         continue # TODO maybe replace by return -> give up
 
       for (speed, angularSpeed) in strategy:
         self.robot.setSpeedPxPa( speed, angularSpeed )
         self.robot.update()
+        distTraveled += self.robot.lastDistStep
         pose = self.robot.localisation.pose()
-#        isThere = math.hypot(pose[0] - lastX, pose[1] - lastY) <= TOLERATED_MISS
-#        if isThere or pathFinder.newData:
         if pathFinder.newData:
           pathFinder.newData = False
           break
@@ -712,10 +716,13 @@ class SICKRobotDay2014:
     self.driver.stop()
 
 
-  def followWall( self, atDistance, timeout=20 ):
+  def followWall( self, atDistance, timeout=20, maxDist=None ):
     print "FOLLOW WALL at ", atDistance
     startTime = self.robot.time
+    distTraveled = 0.0
     while startTime + timeout > self.robot.time:
+      if maxDist is not None and distTraveled > maxDist:
+        break
       if self.robot.laserData == None or len(self.robot.laserData) != 541:
         self.robot.setSpeedPxPa( 0, 0 )
       else:
@@ -734,6 +741,8 @@ class SICKRobotDay2014:
           speed = 0.0
         self.robot.setSpeedPxPa( speed, angle/2.0 )
       self.robot.update()
+      distTraveled += self.robot.lastDistStep
+    print "followWall - distTraveled", distTraveled
     self.driver.stop()
 
 
@@ -773,11 +782,9 @@ class SICKRobotDay2014:
           det = DigitDetecor( digit )
           self.robot.addExtension( det.updateExtension, "DIGI" )
           try:
+            self.goVfh( timeout = 20, maxDist=3.0 ) # TODO set this to 2/3 of dist(island,border)
             while True:
-              # "random" walk with purpose to find the number
-#              self.goVfh( self.random(2.0, 30.0) )
-#              self.turnWithWatchdog( math.radians(self.random(-180, 180)), angularSpeed = math.radians(20) )
-              self.followWall( atDistance=1.5, timeout = 10.0 )
+              self.followWall( atDistance=1.5, timeout = 10.0, maxDist = 2.0 ) # TODO tune params
               self.driver.turn( math.radians(-90), angularSpeed = math.radians(20), timeout=20 )
               self.driver.turn( math.radians(90), angularSpeed = math.radians(40), timeout=20 )
           except DigitFound, e:
