@@ -709,6 +709,32 @@ class SICKRobotDay2014:
     self.driver.stop()
 
 
+  def followWall( self, atDistance, timeout=20 ):
+    print "FOLLOW WALL at ", atDistance
+    startTime = self.robot.time
+    while startTime + timeout > self.robot.time:
+      if self.robot.laserData == None or len(self.robot.laserData) != 541:
+        self.robot.setSpeedPxPa( 0, 0 )
+      else:
+        minMM = min([10000]+[x for x in self.robot.laserData[:541*2/3] if x > 0])
+        minIndex = self.robot.laserData.index(minMM)
+        minDist = minMM/1000.0
+        angle = math.radians( (minIndex-270)/2.0 )
+        angle += math.radians(90)
+        if abs(angle) < math.radians(45):
+          speed = 0.1
+          if minDist < atDistance - 0.1:
+            angle += math.radians(10)
+          elif minDist > atDistance + 0.1:
+            angle -= math.radians(10)
+        else:
+          speed = 0.0
+        self.robot.setSpeedPxPa( speed, angle/2.0 )
+      self.robot.update()
+    self.driver.stop()
+    sys.exit()
+
+
   def ver0( self, verbose=False ):
     # follow each number separaterly
     print "ver0", self.code, self.robot.battery
@@ -744,8 +770,11 @@ class SICKRobotDay2014:
           try:
             while True:
               # "random" walk with purpose to find the number
-              self.goVfh( self.random(2.0, 30.0) )
-              self.turnWithWatchdog( math.radians(self.random(-180, 180)), angularSpeed = math.radians(20) )
+#              self.goVfh( self.random(2.0, 30.0) )
+#              self.turnWithWatchdog( math.radians(self.random(-180, 180)), angularSpeed = math.radians(20) )
+              self.followWall( atDistance=1.5, timeout = 10.0 )
+              self.driver.turn( math.radians(-90), angularSpeed = math.radians(20), timeout=20 )
+              self.driver.turn( math.radians(90), angularSpeed = math.radians(40), timeout=20 )
           except DigitFound, e:
             print "FOUND", digit, e.info
             self.robot.removeExtension( "DIGI" ) # so we won't get other exceptions
