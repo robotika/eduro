@@ -804,6 +804,9 @@ class SICKRobotDay2014:
               self.driver.turn( math.radians(-90), angularSpeed = math.radians(20), timeout=20 )
               self.driver.turn( math.radians(90), angularSpeed = math.radians(40), timeout=20 )
           except DigitFound, e:
+            # danger that exception was thrown during VFH and it did not clean-up used resources
+            self.robot.removeExtension( "VHF" )
+            self.robot.removeExtension( "PATH" )
             print "FOUND", digit, e.info
             self.robot.removeExtension( "DIGI" ) # so we won't get other exceptions
             if self.goToDigit( digit, info=e.info ):
