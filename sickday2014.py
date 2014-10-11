@@ -704,6 +704,7 @@ class SICKRobotDay2014:
   def goToCenterArea( self ):
     print "goToCenterArea"
     prevStamp = self.robot.laserDataTimestamp
+    islandDir = None
     for cmd in self.driver.goStraightG( 10.0 ):
       if prevStamp != self.robot.laserDataTimestamp:
         if self.robot.laserData == None or len(self.robot.laserData) != 541:
@@ -714,7 +715,7 @@ class SICKRobotDay2014:
           data2 = [x == 0 and 20000 or x for x in self.robot.laserData]
           arr = [min(i)/1000.0 for i in [islice(data2, start, start+step) for start in range(0,len(data2),step)]]
           arr.reverse() #?!
-          minDist = min(arr[18:-18])/1000.
+          minDist = min(arr[18:-18])
           jumps = [(a-b) for a,b in izip(arr[:-1],arr[1:])]
 #          print "maxJumps %.1f %.1f %.1f" % tuple(sorted(jumps, reverse=True)[:3])
 #          print "jumps", ["%.1f" % x for x in jumps]
@@ -739,13 +740,14 @@ class SICKRobotDay2014:
                   if 1.5 < diameter < 4.0:
                     tmpMin,tmpIndex = min( [(a,b) for a, b in zip(arr[fromIndex:toIndex], range(toIndex-fromIndex))] )
                     tmpIndex += fromIndex
-                    islandDir = math.radians(5*(tmpIndex-27)) # TODO check direction!!!
+                    islandDir = -math.radians(5*(tmpIndex-27)) # TODO check direction!!!
               fromIndex = None
             else:
               s += ' '
           s += "'"
-          print "JUMP", s, math.degrees(islandDir)
+          print "JUMP", s, islandDir
           if minDist < 2.0:
+            print "completed", minDist
             break
           if islandDir:
             cmd = cmd[0], islandDir/2.
