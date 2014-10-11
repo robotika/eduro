@@ -46,6 +46,7 @@ if __name__ == "__main__":
         if v is not None:
             print v
             break
+    raspi.requestStop()
 
 #-------------------------------------------------------------------
 # vim: expandtab sw=4 ts=4 
