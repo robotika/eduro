@@ -19,6 +19,7 @@ from os import path, sep
 from hand import handPositionExtension
 from rfid import RFID
 from barcode import BarcodeReader
+from raspi import RasPi
 
 def processedRFID( rfidData ):
   if rfidData and len(rfidData) == 10:
@@ -175,6 +176,7 @@ class EduroMaxi( Robot ):
     if index == None:
       self.laser = laser
       self.laserData = None
+      self.laserDataTimestamp = None
       self.remissionData = None
       self.laser.pose = pose
       self.addExtension( laserDataExtension )
@@ -182,6 +184,7 @@ class EduroMaxi( Robot ):
       assert( index == 2 )
       self.laser2 = laser
       self.laserData2 = None
+      self.laserData2Timestamp = None
       self.remissionData2 = None
       self.laser2.pose = pose
       self.addExtension( laserDataExtension2 )
@@ -270,12 +273,14 @@ def cameraDataExtension( robot, id, data ):
 def laserDataExtension( robot, id, data ):
   if id=='laser':
     robot.laserData = data
+    robot.laserDataTimestamp = robot.time
   if id=='remission':
     robot.remissionData = data
 
 def laserDataExtension2( robot, id, data ):
   if id=='laser2':
     robot.laserData2 = data
+    robot.laserData2Timestamp = robot.time
   if id=='remission2':
     robot.remissionData2 = data
 

@@ -42,7 +42,7 @@ if __name__ == "__main__":
     raspi = RasPi( sys.argv[1] )
     raspi.start()
     while True:
-        v = reader.getData()
+        v = raspi.getData()
         if v is not None:
             print v
             break

@@ -699,20 +699,27 @@ class SICKRobotDay2014:
 
 
   def goToCenterArea( self ):
+    print "goToCenterArea"
+    prevStamp = self.robot.laserDataTimestamp
     for cmd in self.driver.goStraightG( 10.0 ):
-      # TODO parse laser data to find "local minima island"
-      # TODO VFH for collision avoidance
-      if self.robot.laserData == None or len(self.robot.laserData) != 541:
-        self.robot.setSpeedPxPa( 0, 0 )
-      else:
-        minDist = min([10000]+[x for x in self.robot.laserData[180:-180] if x > 0])/1000.
-        if minDist < 2.0:
-          break
-#        print minDist
-#        self.robot.setSpeedPxPa( min(self.driver.maxSpeed, minDist - desiredDist), angularSpeed )
+      if prevStamp != self.robot.laserDataTimestamp:
+        if self.robot.laserData == None or len(self.robot.laserData) != 541:
+          self.robot.setSpeedPxPa( 0, 0 )
+        else:
+          # FRE like structure with 5deg step
+          step = 10 
+          data2 = [x == 0 and 10000 or x for x in self.robot.laserData]
+          arr = [min(i)/1000.0 for i in [islice(data2, start, start+step) for start in range(0,len(data2),step)]]
+          arr.reverse() #?!
+          minDist = min(arr[18:-18])/1000.
+          jumps = [abs(a-b) for a,b in izip(arr[:-1],arr[1:])]
+          print "maxJumps %.1f %.1f %.1f" % tuple(sorted(jumps)[-3:])
+          if minDist < 2.0:
+            break
+      prevStamp = self.robot.laserDataTimestamp
+
       self.robot.setSpeedPxPa( *cmd )
       self.robot.update()
-#    self.robot.beep = 1
     self.driver.stop()
 
 
@@ -754,7 +761,7 @@ class SICKRobotDay2014:
       self.goToCenterArea()
       if not self.approachFeeder( verifyTarget = True ):
         for i in xrange(3):
-          self.driver.turn( angle=math.radians(45), radius=0.5, angularSpeed=math.radians(20), timeout=10 ) # TODO tweak params
+          self.driver.turn( angle=math.radians(45), radius=-0.5, angularSpeed=math.radians(20), timeout=10 ) # TODO tweak params
           self.followWall( atDistance = 1.0, maxDist = 2.0 )
           self.driver.turn( math.radians(-90), angularSpeed = math.radians(20), timeout=20 )
 #          self.driver.turn( math.radians(90), angularSpeed = math.radians(40), timeout=20 )  # TODO trigger
