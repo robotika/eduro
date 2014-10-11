@@ -736,7 +736,7 @@ class SICKRobotDay2014:
                 if alpha < math.radians(120):
                   dist = arr[(toIndex+fromIndex)/2]
                   diameter = 2*dist*( math.sin(alpha/2.)/(1-math.sin(alpha/2)) )
-                  print math.degrees(alpha), dist, diameter
+#                  print math.degrees(alpha), dist, diameter
                   if 1.5 < diameter < 4.0:
                     tmpMin,tmpIndex = min( [(a,b) for a, b in zip(arr[fromIndex:toIndex], range(toIndex-fromIndex))] )
                     tmpIndex += fromIndex
@@ -745,12 +745,12 @@ class SICKRobotDay2014:
             else:
               s += ' '
           s += "'"
-          print "JUMP", s, islandDir
+#          print "JUMP", s, islandDir
           if minDist < 2.0:
             print "completed", minDist
             break
-          if islandDir:
-            cmd = cmd[0], islandDir/2.
+        if islandDir:
+          cmd = cmd[0], islandDir
       prevStamp = self.robot.laserDataTimestamp
 
       self.robot.setSpeedPxPa( *cmd )
