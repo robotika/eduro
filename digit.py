@@ -36,6 +36,8 @@ def validDigitPosition( x, y, w, h ):
 
 def recognizeDigits( frame, level = 130 ):
     gray = cv2.cvtColor( frame, cv2.COLOR_BGR2GRAY )
+    kernel = np.ones( (3,3), np.uint8)
+    gray = cv2.erode( gray, kernel )
     ret, binary = cv2.threshold( gray, level, 255, cv2.THRESH_BINARY )
     tmp = cv2.cvtColor( binary, cv2.COLOR_GRAY2BGR )
     contours, hierarchy = cv2.findContours( binary, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE )
@@ -51,6 +53,9 @@ def recognizeDigits( frame, level = 130 ):
             if x > b and y > b and x+w < 640-b and y+h < 512-b:
                 if parent >= 0 and fitsIn( (x-b,y-b,w+2*b,h+2*b), contours[parent] ):
                     if validDigitPosition( x, y, w, h ):
+                        hull = cv2.convexHull( contours[c], returnPoints = False )
+                        defects = cv2.convexityDefects( contours[c], hull )
+                        # print defects                       
                         cv2.drawContours(tmp, [contours[c]], -1, (0,255,0), 2)
                         cv2.rectangle( tmp, (x,y), (x+w,y+h), color=(0,128,255), thickness=2 )
                         ret = True
@@ -162,7 +167,7 @@ def recognizeNavTargetEx( frame, threshold, note=None ):
         return recognizeNavTarget( frame, threshold )
 
 
-def processLog( filename ):
+def processLog( filename, index=None ):
     f = open(filename)
 #    console = subprocess.Popen( [DIGIT_EXE_PATH,] , cwd = DIGIT_CWD, stdin=subprocess.PIPE, stdout=subprocess.PIPE )
 
@@ -176,7 +181,7 @@ def processLog( filename ):
             break
         cmd,imgFile = eval(line)
 
-        if imgFile is not None:
+        if imgFile is not None and (index==None or imgFile.split('.')[-2].endswith( index )):
             print imgFile
             imgAbsPath = os.path.dirname( filename ) + os.sep + imgFile.split('/')[-1]            
             tmpLog = open( TMP_OUTPUT_LOG, "w" )
@@ -188,8 +193,13 @@ def processLog( filename ):
             tmpLog.close()
             img = cv2.imread( TMP_OUTPUT_PATH )
             cv2.imshow( 'image', img )
-            if cv2.waitKey(500) >= 0:
+            if index is None:
+                if cv2.waitKey(1) >= 0:
+                    break
+            else:
+                cv2.waitKey(0)
                 break
+
         else:
             fout.write( line )
         fout.flush()
@@ -205,12 +215,15 @@ if __name__ == "__main__":
     if len(sys.argv) > 2:
         threshold = int(sys.argv[2])
     if path.endswith(".jpg"):
-#        recognizeDigits( cv2.imread( sys.argv[1] ), threshold )
-        recognizeNavTargetEx( cv2.imread( sys.argv[1] ), threshold )
+        recognizeDigits( cv2.imread( sys.argv[1] ), threshold )
+#        recognizeNavTargetEx( cv2.imread( sys.argv[1] ), threshold )
         cv2.waitKey(0)
         sys.exit(0)
     if path.endswith(".log"):
-        processLog( path )
+        if len(sys.argv) > 2:
+            processLog( path, index=sys.argv[2] )
+        else:
+            processLog( path )
         sys.exit(0)
     for (dirpath, dirnames, filenames) in os.walk(path):
         for name in filenames:
