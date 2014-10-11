@@ -760,14 +760,18 @@ class SICKRobotDay2014:
     while True:
       self.goToCenterArea()
       if not self.approachFeeder( verifyTarget = True ):
-        for i in xrange(3):
-          self.driver.turn( angle=math.radians(45), radius=-0.5, angularSpeed=math.radians(20), timeout=10 ) # TODO tweak params
-          self.followWall( atDistance = 1.0, maxDist = 2.0 )
-          self.driver.turn( math.radians(-90), angularSpeed = math.radians(20), timeout=20 )
-#          self.driver.turn( math.radians(90), angularSpeed = math.radians(40), timeout=20 )  # TODO trigger
-          if self.approachFeeder( verifyTarget = True ):
-            break
-        else:
+        det = DigitDetecor( 'X' )
+        self.robot.addExtension( det.updateExtension, "DIGI" )
+        try:
+          for i in xrange(3):
+            self.driver.turn( angle=math.radians(45), radius=-0.5, angularSpeed=math.radians(20), timeout=10 ) # TODO tweak params
+            self.followWall( atDistance = 1.0, maxDist = 1.0 ) # TODO align based on success rate
+            self.driver.turn( math.radians(-90), angularSpeed = math.radians(20), timeout=20 )
+            self.driver.turn( math.radians(90), angularSpeed = math.radians(40), timeout=20 )
+        except DigitFound, e:
+          print "TARGET located!"
+        self.robot.removeExtension( "DIGI" ) # so we won't get other exceptions
+        if not self.approachFeeder( verifyTarget = True ):
           self.driver.goStraight( -1.0, timeout=15 )
           self.approachFeeder( verifyTarget = False ) # giving up
           
