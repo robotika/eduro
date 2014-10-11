@@ -19,7 +19,7 @@ class MyFuncs:
         return 1
 
     def step( self ):
-        detected = [] #['ahoj']
+        detected = [(1,2,3)] #['ahoj']
         return detected
 
     def term( self ):

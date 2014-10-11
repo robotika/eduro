@@ -55,7 +55,7 @@ def computeLoadManeuver( minDistL, frontDist, minDistR ):
     alpha = math.acos(minDist/frontDist)
     A = math.sqrt(frontDist**2 - minDist**2) + abs(math.sin(alpha)*laserOffset)
     B = minDist-wallRingCenterDist + math.cos(alpha)*laserOffset
-    print "AB", A, B
+    print "AB", A, B, math.sqrt(frontDist**2 - minDist**2)
     beta = math.atan2( A, B )
     if minDistR < minDistL:
       # i.e. wall on mine right side
@@ -525,6 +525,7 @@ class SICKRobotDay2014:
 
 
   def goVfh( self, timeout, maxDist=None ):
+    print "goVfh", maxDist
     TOLERATED_MISS = 0.2 # [m]
     ANGULAR_THRESHOLD = math.radians(20) # [rad]
     ANGULAR_SPEED = math.radians(60) # [rad/s]
@@ -564,6 +565,7 @@ class SICKRobotDay2014:
         happyTime = self.robot.time
 
       if self.robot.time - happyTime > ENDURANCE:
+        print "ENDURANCE!"
         break # does not have sense to wait - try to turn somewhere else ...
         # We are stuck for too long. Let's try to retreat a bit:
         #    1) to show we are alive,
@@ -591,6 +593,7 @@ class SICKRobotDay2014:
 
     self.robot.removeExtension( "VHF" )
     self.robot.removeExtension( "PATH" )
+    print "... traveled", distTraveled, "time", self.robot.time - startTime
 
 
   def cam2waypoint( self, pose, camInfo ):
@@ -708,14 +711,44 @@ class SICKRobotDay2014:
         else:
           # FRE like structure with 5deg step
           step = 10 
-          data2 = [x == 0 and 10000 or x for x in self.robot.laserData]
+          data2 = [x == 0 and 20000 or x for x in self.robot.laserData]
           arr = [min(i)/1000.0 for i in [islice(data2, start, start+step) for start in range(0,len(data2),step)]]
           arr.reverse() #?!
           minDist = min(arr[18:-18])/1000.
-          jumps = [abs(a-b) for a,b in izip(arr[:-1],arr[1:])]
-          print "maxJumps %.1f %.1f %.1f" % tuple(sorted(jumps)[-3:])
+          jumps = [(a-b) for a,b in izip(arr[:-1],arr[1:])]
+#          print "maxJumps %.1f %.1f %.1f" % tuple(sorted(jumps, reverse=True)[:3])
+#          print "jumps", ["%.1f" % x for x in jumps]
+#          print "arr", ["%.1f" % x for x in arr]
+          s = "'"
+          islandDir = None
+          fromIndex, toIndex = None, None
+          for (i,x) in enumerate(jumps):
+            if x > 2:
+              s += '+'
+              fromIndex = i
+            elif x < -2:
+              s += '-'
+              toIndex = i
+              if fromIndex:
+                alpha = math.radians(5*(toIndex-fromIndex))
+                alpha -= math.radians(5)
+                if alpha < math.radians(120):
+                  dist = arr[(toIndex+fromIndex)/2]
+                  diameter = 2*dist*( math.sin(alpha/2.)/(1-math.sin(alpha/2)) )
+                  print math.degrees(alpha), dist, diameter
+                  if 1.5 < diameter < 4.0:
+                    tmpMin,tmpIndex = min( [(a,b) for a, b in zip(arr[fromIndex:toIndex], range(toIndex-fromIndex))] )
+                    tmpIndex += fromIndex
+                    islandDir = math.radians(5*(tmpIndex-27)) # TODO check direction!!!
+              fromIndex = None
+            else:
+              s += ' '
+          s += "'"
+          print "JUMP", s, math.degrees(islandDir)
           if minDist < 2.0:
             break
+          if islandDir:
+            cmd = cmd[0], islandDir/2.
       prevStamp = self.robot.laserDataTimestamp
 
       self.robot.setSpeedPxPa( *cmd )
@@ -802,6 +835,7 @@ class SICKRobotDay2014:
           det = DigitDetecor( digit )
           self.robot.addExtension( det.updateExtension, "DIGI" )
           try:
+            self.driver.goStraight( 0.5 )
             self.goVfh( timeout = 20, maxDist=3.0 ) # TODO set this to 2/3 of dist(island,border)
             while True:
               self.followWall( atDistance=1.5, timeout = 10.0, maxDist = 2.0 ) # TODO tune params
