@@ -446,7 +446,7 @@ class SICKRobotDay2014:
                 centerX = 320
                 angle = (centerX-(x+dx/2))*0.002454369260617026
                 dist = prevLaser[int(angle/2.)+271]/1000.
-#                print dist
+                print "Target at", dist, self.robot.cameraData[1]
                 t = combinedPose( (prevPose[0], prevPose[1], prevPose[2]+angle), (dist,0,0) )
                 target = (t[0],t[1])
                 viewlog.dumpBeacon( target, color=(255,128,0) )
