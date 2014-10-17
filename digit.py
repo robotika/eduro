@@ -206,6 +206,28 @@ def processLog( filename, index=None ):
     fout.close()
 
 
+def video( path, outFilename, threshold=80 ):
+    "create demo video of detected feeders"
+    assert outFilename.endswith(".avi"), outFilename
+    writer = cv2.VideoWriter( outFilename, cv2.cv.CV_FOURCC('F', 'M', 'P', '4'), 4, (640,512) ) 
+    for (dirpath, dirnames, filenames) in os.walk(path):
+        for name in filenames:
+            if name.endswith(".jpg"):
+                print name
+                if recognizeNavTarget( cv2.imread( dirpath+ os.sep+name ), threshold ):
+                    img = cv2.imread( "tmp.png" )
+                    for i in xrange(2):
+                        writer.write( img ) 
+                    if cv2.waitKey(1000) != -1:
+                        break
+                else:
+                    if cv2.waitKey(10) != -1:
+                        break
+                img = cv2.imread( "tmp.png" )
+                writer.write( img ) 
+    writer.release()
+
+
 if __name__ == "__main__": 
     if len(sys.argv) < 2:
         print __doc__
