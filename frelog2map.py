@@ -23,6 +23,29 @@ MARKED = 0xff0000 # Marked plants/detection target: RED
 scale = 100.0  # i.e. 1 pixel = 1cm
 imsize = (2000,1500)
 
+def replace( arr, val, newVal ):
+    ret = []
+    for a in arr:
+        if a == val:
+            ret.append( newVal )
+        else:
+            ret.append( val )
+    return ret
+
+
+def filterLocalMinima( laserData, neiSize=15 ):
+    "replace all non-zero elements by zero if they are not local minima"
+    laserData = laserData[:] # own copy
+    replace(laserData,0,10000)
+    ret = [0]*neiSize # laserData[:neiSize]
+    for i in xrange(neiSize, len(laserData)-neiSize):        
+        if min(laserData[i-neiSize:i+neiSize+1]) == laserData[i]:
+            ret.append( laserData[i] )
+        else:
+            ret.append( 0 )
+    ret.extend( [0]*neiSize ) #laserData[-neiSize:] )
+    return ret
+
 
 def createMap( robot ):
     img = np.zeros( (imsize[1],imsize[0],3), np.uint8 )
@@ -34,13 +57,15 @@ def createMap( robot ):
             (x,y,heading) = robot.localisation.pose()
             cv2.circle( img, (int(x*scale)+imsize[0]/2, -int(y*scale)+imsize[1]/2), 2, (255,0,0) )
             if robot.laserData and robot.laserData != prevLaser:
-                for i,d in enumerate(robot.laserData):
+                for i,d in enumerate(filterLocalMinima(robot.laserData)):
                     angle = heading + math.radians((i-270)/2.)
                     dist = d/1000.0
-                    if d > 0 and dist < 0.5:
+                    if d > 0 and dist < 0.75:
                         sx = x + dist * math.cos( angle )
                         sy = y + dist * math.sin( angle )
                         cv2.circle( img, (int(sx*scale)+imsize[0]/2, -int(sy*scale)+imsize[1]/2), 1, (0,0,0) )
+                        cv2.line( img, (int(sx*scale)+imsize[0]/2, -int(sy*scale)+imsize[1]/2), 
+                                 (int(x*scale)+imsize[0]/2, -int(y*scale)+imsize[1]/2), (255,255,255) )
                 prevLaser = robot.laserData
     except LogEnd:
         pass
