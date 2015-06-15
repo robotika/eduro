@@ -350,10 +350,11 @@ class FieldRobot:
 #    self.robot.fnSpeedLimitController = [self.robot.pauseSpeedFn] 
     self.robot.fnSpeedLimitController = [] 
     self.robot.addExtension( emergencyStopExtension )
-    self.robot.attachGPS()
+#    self.robot.attachGPS()
     self.robot.attachLaser( remission=True )
     self.robot.laser.stopOnExit = False  # for faster boot-up
-    self.robot.attachCamera( cameraExe = "../robotchallenge/rc" ) # TODO what was used?!
+#    self.robot.attachCamera( cameraExe = "../robotchallenge/rc" ) # TODO what was used?!
+    self.robot.attachCamera( cameraExe = "../robotchallenge/redcone" ) # FRE2015
     self.robot.attachHand()
     self.robot.rfidData = None # hack 2013
     self.robot.gpsData = None
@@ -392,7 +393,7 @@ class FieldRobot:
 
     try:
       # start GPS sooner to get position fix
-      self.robot.gps.start()
+#      self.robot.gps.start()
       self.robot.laser.start()
       self.waitForStart()
       if not self.robot.switchBlueSelected:
@@ -430,7 +431,18 @@ class FieldRobot:
                self.robot.toDisplay = '--'
                speed, angularSpeed = 0.0, 0.0            
 #            if detectBlockedRow and row.collisionAhead[1] < 0.25:
-            if detectBlockedRow and row.collisionAhead[2]:
+
+            blocked = False
+            if detectBlockedRow and self.robot.cameraData:
+              camDat, fileName = self.robot.cameraData
+              if camDat:
+                blocked = int(camDat.split()[0]) > 30
+                if blocked:
+                  print "CAMERA BLOCKED!!"
+
+#            print  self.robot.cameraData
+#            if detectBlockedRow and row.collisionAhead[2]:
+            if detectBlockedRow and blocked:
               print "---------- COLLISON -> TURN 180 -------------"
               self.robot.beep = 1
               self.driver.stop()
@@ -502,7 +514,7 @@ class FieldRobot:
     sprayer( self.robot, 0, 0 )         
     print "battery:", self.robot.battery
     self.robot.camera.requestStop()
-    self.robot.gps.requestStop()
+#    self.robot.gps.requestStop()
     self.robot.laser.requestStop()
 
 
@@ -605,9 +617,10 @@ class FieldRobot:
     print "RUNNING:", self.configFilename
     if self.configFilename.startswith("cmd:"):
       return eval( self.configFilename[4:] )
+
 #    return self.ver2([-1,1]*10, detectWeeds = False, detectBlockedRow = False)  # Task1
-#    return self.ver2( [2,-1,0,-2,3,2,0], detectWeeds = False, detectBlockedRow = True ) # Task2 S-2R-1L-0-2L-3R-2R-F
-    return self.ver2([-2,2]*10, detectWeeds = True, detectBlockedRow = False)  # Task3
+    return self.ver2( [2,-1,0,-2,3,2,0], detectWeeds = False, detectBlockedRow = True ) # Task2 S-2R-1L-0-2L-3R-2R-F
+#    return self.ver2([-2,2]*10, detectWeeds = True, detectBlockedRow = False)  # Task3
 
 from eduromaxi import EduroMaxi
 import launcher

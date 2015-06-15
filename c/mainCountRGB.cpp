@@ -85,7 +85,7 @@ void findBlobFrames( IplImage *image, CvRect* roi )
 {
 }
 
-CameraBlobs::BlobType findPuckInFront( IplImage *image, CvRect* roi, BubbleStruct *pRed=0, BubbleStruct *pBlue=0 )
+CameraBlobs::BlobType findPuckInFront_FRE2014( IplImage *image, CvRect* roi, BubbleStruct *pRed=0, BubbleStruct *pBlue=0 )
 {
   int countRed = 0, countBlue = 0;
   int sumRedX = 0, sumBlueX = 0;
@@ -163,6 +163,77 @@ CameraBlobs::BlobType findPuckInFront( IplImage *image, CvRect* roi, BubbleStruc
   return countRed > countBlue ? CameraBlobs::ERedPuck : CameraBlobs::EBluePuck;
 }
 
+
+
+CameraBlobs::BlobType findPuckInFront( IplImage *image, CvRect* roi, BubbleStruct *pRed=0, BubbleStruct *pBlue=0 )
+{
+  int countRed = 0, countBlue = 0;
+  int sumRedX = 0, sumBlueX = 0;
+  int sumRedY = 0, sumBlueY = 0;
+  int sumRedXX = 0, sumBlueXX = 0;
+  int sumRedYY = 0, sumBlueYY = 0;
+  int x, y;
+  int minX, maxX;
+  int middleY;
+  double leftSlope = -(426.0/190.0), leftOffset = 426.0;
+  double rightSlope = 354.0/190.0, rightOffset = 354.0;
+  middleY = roi->y + roi->height/2;
+  for( y = roi->y; y < roi->y + roi->height; y++ )
+  {
+    minX = std::max( roi->x, (int)(y*leftSlope + leftOffset));
+    maxX = std::min( roi->x + roi->width, (int)(y*rightSlope + rightOffset));
+    for( x = minX; x < maxX; x++ )
+    {
+      //if( x == 280 )
+      //  x += 140; // skip inside
+      char* ptr = image->imageData+ 3*x+y*image->widthStep;
+      Color c;
+      c.setRGB( ptr[2], ptr[1], ptr[0] );
+      if( c.isRed() )
+      {
+        countRed++;
+        sumRedX += x;
+        sumRedY += y;
+        sumRedXX += (x*x);
+        sumRedYY += (y*y);
+        ptr[0] = 0;
+        ptr[1] = 0;
+        ptr[2] = (char)255;
+      }
+      else
+      {
+        ptr[0] = (char)255;
+        ptr[1] = (char)255;
+        ptr[2] = (char)255;
+      }
+    }
+  }
+
+  if( pRed )
+  {
+    pRed->count = countRed;
+    pRed->sumX = sumRedX;
+    pRed->sumY = sumRedY;
+    pRed->sumXX = sumRedXX;
+    pRed->sumYY = sumRedYY;
+  }
+  if( pBlue )
+  {
+    pBlue->count = countBlue;
+    pBlue->sumX = sumBlueX;
+    pBlue->sumY = sumBlueY;
+    pBlue->sumXX = sumBlueXX;
+    pBlue->sumYY = sumBlueYY;
+  }
+
+  if( countRed + countBlue < 20 )
+    return CameraBlobs::ENoBlob;
+
+  return countRed > countBlue ? CameraBlobs::ERedPuck : CameraBlobs::EBluePuck;
+}
+
+
+
 bool LoadImage(const std::string filename, IplImage* dest, CvRect* roi = NULL)
 {
   IplImage* frame = cvLoadImage(filename.c_str());
@@ -225,7 +296,9 @@ int main( int argc, char *argv[] )
 //  *roi = cvRect(54, 332, 207- 54, 447-332); // FRE2013
 //  *roi = cvRect(54, 332, 550, 447-332); // FRE2013
 //  *roi = cvRect(0, 332, 639, 447-332); // FRE2014
-  *roi = cvRect(150, 332, 550-150, 447-332); // FRE2014
+//  *roi = cvRect(150, 332, 550-150, 447-332); // FRE2014
+//  *roi = cvRect(283, 231, 132, 108); // FRE2015
+  *roi = cvRect(280, 210, 130, 148); // FRE2015
   CvRect* roi2 = new CvRect();
   *roi2 = cvRect(0,0,640,512);
 
