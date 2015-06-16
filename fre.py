@@ -50,6 +50,8 @@ MIN_GAP_SIZE = 4 #3 #5
 MAX_GAP_SIZE = 13 #17
 SLOW_DOWN_ANGLE = math.radians(15.0)
 
+RED_ALERT = 100
+
 # TODO move to robot.py (?)
 def compassHeading( rawCompass ):
   "convert raw compass data to heading in radians"
@@ -131,7 +133,7 @@ class LaserRow:
     self.endOfRow = False
     self.cornLeft = 10.0 # far
     self.cornRight = 10.0
-    self.collisionAhead = 10.0,10.0,False # far (wide, narrow, override)
+    self.collisionAhead = 10.0,10.0,False,False # far (wide, narrow, override, danger)
     self.lastLeft, self.lastRight = None, None
     self.prevLR = None
     self.poseHistory = []
@@ -224,7 +226,7 @@ class LaserRow:
         self.center += (right-left)/2
         offset = self.center-len(arr)/2
         self.directionAngle = math.radians( -offset*step/2.0 )
-        self.collisionAhead = min(arr[54/3:2*54/3]), min(arr[4*54/9:5*54/9]), (left+right < MIN_GAP_SIZE)
+        self.collisionAhead = min(arr[54/3:2*54/3]), min(arr[4*54/9:5*54/9]), (left+right < MIN_GAP_SIZE), danger
         if False: #self.verbose:
           if self.collisionAhead[0] < 0.25:
             print "!!! COLISSION AHEAD !!!", self.collisionAhead
@@ -432,17 +434,18 @@ class FieldRobot:
                speed, angularSpeed = 0.0, 0.0            
 #            if detectBlockedRow and row.collisionAhead[1] < 0.25:
 
-            blocked = False
+            blockedCamCount = 0
             if detectBlockedRow and self.robot.cameraData:
               camDat, fileName = self.robot.cameraData
               if camDat:
-                blocked = int(camDat.split()[0]) > 30
-                if blocked:
-                  print "CAMERA BLOCKED!!"
+                blockedCamCount = int(camDat.split()[0])
+                if blockedCamCount > RED_ALERT:
+                  print "CAMERA BLOCKED!!", blockedCamCount
 
 #            print  self.robot.cameraData
 #            if detectBlockedRow and row.collisionAhead[2]:
-            if detectBlockedRow and blocked:
+            if detectBlockedRow and row.collisionAhead[3] and blockedCamCount > RED_ALERT:
+#            if detectBlockedRow and blocked:
               print "---------- COLLISON -> TURN 180 -------------"
               self.robot.beep = 1
               self.driver.stop()
@@ -619,7 +622,7 @@ class FieldRobot:
       return eval( self.configFilename[4:] )
 
 #    return self.ver2([-1,1]*10, detectWeeds = False, detectBlockedRow = False)  # Task1
-    return self.ver2( [2,-1,0,-2,3,2,0], detectWeeds = False, detectBlockedRow = True ) # Task2 S-2R-1L-0-2L-3R-2R-F
+    return self.ver2( [-3,1,-2,-3,5], detectWeeds = False, detectBlockedRow = True ) # Task2 S-3L-1R-2L-3L-5R-F
 #    return self.ver2([-2,2]*10, detectWeeds = True, detectBlockedRow = False)  # Task3
 
 from eduromaxi import EduroMaxi
