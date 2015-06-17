@@ -322,7 +322,7 @@ class CameraRow:
             robot.beep  = 1
           else:
             robot.beep  = 0
-          sprayer( robot, cmd[2], cmd[1] ) # swapped due to wrong wiring
+          sprayer( robot, cmd[1], cmd[2] )
     if id == 'camera':
       if self.verbose and len(data) > 1:
         print data[1]
@@ -333,11 +333,11 @@ class CameraRow:
         print "WEED:", leftPip, rightPip
         if leftPip:
           xy = combinedPose(robot.localisation.pose(), (0,0.35,0))[:2]
-          reportBall( robot.gpsData )
+#          reportBall( robot.gpsData )
           viewlog.dumpBeacon( xy, color=(255,255,0) )
         if rightPip:
           xy = combinedPose(robot.localisation.pose(), (0,-0.35,0))[:2]
-          reportBall( robot.gpsData )
+#          reportBall( robot.gpsData )
           viewlog.dumpBeacon( xy, color=(255,255,0) )
         self.lastCamera.append( (self.counter + 0, leftPip, rightPip ) )
       else:
