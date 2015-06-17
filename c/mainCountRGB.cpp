@@ -35,6 +35,7 @@ struct Color
   bool isBlue();
   bool isGreen();
   bool isYellow();
+  bool isDark();
 };
 
 // helper functions
@@ -71,6 +72,12 @@ bool Color::isYellow()
   return r()>240 && g()>240;
 }
 
+bool Color::isDark()
+{
+//  return r()>100 && g()>100 && (b() < 0.7* r()) && (b() < 0.7 * g());
+  return r()<40 && g()<40 && b()<40;
+}
+
 
 //-----------------------------------------------------------------------------
 
@@ -85,7 +92,8 @@ void findBlobFrames( IplImage *image, CvRect* roi )
 {
 }
 
-CameraBlobs::BlobType findPuckInFront_FRE2014( IplImage *image, CvRect* roi, BubbleStruct *pRed=0, BubbleStruct *pBlue=0 )
+// _FRE2014
+CameraBlobs::BlobType findPuckInFront( IplImage *image, CvRect* roi, BubbleStruct *pRed=0, BubbleStruct *pBlue=0 )
 {
   int countRed = 0, countBlue = 0;
   int sumRedX = 0, sumBlueX = 0;
@@ -104,12 +112,14 @@ CameraBlobs::BlobType findPuckInFront_FRE2014( IplImage *image, CvRect* roi, Bub
     maxX = std::min( roi->x + roi->width, (int)(y*rightSlope + rightOffset));
     for( x = minX; x < maxX; x++ )
     {
-      if( x == 280 )
-        x += 140; // skip inside
+      //if( x == 280 )
+      //  x += 140; // skip inside
+      if( x == 220 )
+        x += 240; // skip inside
       char* ptr = image->imageData+ 3*x+y*image->widthStep;
       Color c;
       c.setRGB( ptr[2], ptr[1], ptr[0] );
-      if( c.isYellow() )
+      if( c.isDark() )
       {
         if( x < 320 )
         {
@@ -165,7 +175,7 @@ CameraBlobs::BlobType findPuckInFront_FRE2014( IplImage *image, CvRect* roi, Bub
 
 
 
-CameraBlobs::BlobType findPuckInFront( IplImage *image, CvRect* roi, BubbleStruct *pRed=0, BubbleStruct *pBlue=0 )
+CameraBlobs::BlobType findPuckInFront_redCone( IplImage *image, CvRect* roi, BubbleStruct *pRed=0, BubbleStruct *pBlue=0 )
 {
   int countRed = 0, countBlue = 0;
   int sumRedX = 0, sumBlueX = 0;
@@ -298,7 +308,8 @@ int main( int argc, char *argv[] )
 //  *roi = cvRect(0, 332, 639, 447-332); // FRE2014
 //  *roi = cvRect(150, 332, 550-150, 447-332); // FRE2014
 //  *roi = cvRect(283, 231, 132, 108); // FRE2015
-  *roi = cvRect(280, 210, 130, 148); // FRE2015
+//  *roi = cvRect(280, 210, 130, 148); // FRE2015 - red cones
+  *roi = cvRect(150-45, 302, 550-150+70, 447-332); // FRE2015-black maize
   CvRect* roi2 = new CvRect();
   *roi2 = cvRect(0,0,640,512);
 

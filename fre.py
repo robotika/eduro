@@ -43,8 +43,10 @@ from camera import img2xy, timeName
 
 from hand import setupHandModule, handUp, handDown
 
-BALL_SIZE_LIMIT_MIN = 100
-BALL_SIZE_LIMIT_MAX = 150
+#BALL_SIZE_LIMIT_MIN = 100
+#BALL_SIZE_LIMIT_MAX = 150
+BALL_SIZE_LIMIT_MIN = 1400
+BALL_SIZE_LIMIT_MAX = 1500000
 
 MIN_GAP_SIZE = 4 #3 #5
 MAX_GAP_SIZE = 13 #17
@@ -356,7 +358,8 @@ class FieldRobot:
     self.robot.attachLaser( remission=True )
     self.robot.laser.stopOnExit = False  # for faster boot-up
 #    self.robot.attachCamera( cameraExe = "../robotchallenge/rc" ) # TODO what was used?!
-    self.robot.attachCamera( cameraExe = "../robotchallenge/redcone" ) # FRE2015
+#    self.robot.attachCamera( cameraExe = "../robotchallenge/redcone" ) # FRE2015 - task2
+    self.robot.attachCamera( cameraExe = "../robotchallenge/dark" ) # FRE2015 - task3
     self.robot.attachHand()
     self.robot.rfidData = None # hack 2013
     self.robot.gpsData = None
@@ -622,8 +625,8 @@ class FieldRobot:
       return eval( self.configFilename[4:] )
 
 #    return self.ver2([-1,1]*10, detectWeeds = False, detectBlockedRow = False)  # Task1
-    return self.ver2( [-3,1,-2,-3,5], detectWeeds = False, detectBlockedRow = True ) # Task2 S-3L-1R-2L-3L-5R-F
-#    return self.ver2([-2,2]*10, detectWeeds = True, detectBlockedRow = False)  # Task3
+#    return self.ver2( [-3,1,-2,-3,5], detectWeeds = False, detectBlockedRow = True ) # Task2 S-3L-1R-2L-3L-5R-F
+    return self.ver2([-2,2,0], detectWeeds = True, detectBlockedRow = False)  # Task3
 
 from eduromaxi import EduroMaxi
 import launcher
