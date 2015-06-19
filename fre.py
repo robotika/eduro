@@ -59,6 +59,8 @@ def compassHeading( rawCompass ):
   "convert raw compass data to heading in radians"
   return math.radians((900-rawCompass)/10.0)
 
+g_weedReportEnabled = True
+
 def sprayer( robot, left, right ):
   cmd = 0
   if left:
@@ -116,6 +118,8 @@ class LaserRow:
     self.reset()
 
   def reset( self, pose = (0,0,0), offsetDeg=0 ):
+    global g_weedReportEnabled
+    g_weedReportEnabled = True
     print "RESET ROW (%0.2f, %0.2f, %0.1f), offset=" % (pose[0], pose[1], math.degrees(pose[2])), offsetDeg 
     viewlog.dumpBeacon( pose[:2], color=(128,128,128) )
     self.preference = None
@@ -142,6 +146,7 @@ class LaserRow:
 
 
   def updateExtension( self, robot, id, data ):
+    global g_weedReportEnabled
     if id == 'remission' and len(data) > 0:
       pass # ignored for FRE 2014
 
@@ -284,6 +289,7 @@ class LaserRow:
           
         if left >= 17 and right >= 17 or left+right >= 40:
           self.endOfRow = True
+          g_weedReportEnabled = False
           if self.verbose and robot.insideField:
             print "laser: END OF ROW"
       self.prevLR = left, right
@@ -311,6 +317,7 @@ class CameraRow:
     self.counter = 0
 
   def updateExtension( self, robot, id, data ):
+    global g_weedReportEnabled
     if id == 0x80:
       self.counter += 1
       if len(self.lastCamera)> 0:
@@ -330,16 +337,17 @@ class CameraRow:
       leftPip = (cc[0] > BALL_SIZE_LIMIT_MIN and cc[0] < BALL_SIZE_LIMIT_MAX)
       rightPip = (cc[1] > BALL_SIZE_LIMIT_MIN and cc[1] < BALL_SIZE_LIMIT_MAX)
       if leftPip or rightPip:
-        print "WEED:", leftPip, rightPip
-        if leftPip:
+        print "WEED:", leftPip, rightPip, g_weedReportEnabled
+        if leftPip and g_weedReportEnabled:
           xy = combinedPose(robot.localisation.pose(), (0,0.35,0))[:2]
 #          reportBall( robot.gpsData )
           viewlog.dumpBeacon( xy, color=(255,255,0) )
-        if rightPip:
+        if rightPip and g_weedReportEnabled:
           xy = combinedPose(robot.localisation.pose(), (0,-0.35,0))[:2]
 #          reportBall( robot.gpsData )
           viewlog.dumpBeacon( xy, color=(255,255,0) )
-        self.lastCamera.append( (self.counter + 0, leftPip, rightPip ) )
+        if g_weedReportEnabled:
+          self.lastCamera.append( (self.counter + 0, leftPip, rightPip ) )
       else:
         self.lastCamera.append( (self.counter + 0+4, False, False) )
 
