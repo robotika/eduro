@@ -6,6 +6,7 @@
 """
 import sys
 import math
+import os
 import matplotlib.pyplot as plt
 
 
@@ -21,6 +22,7 @@ def draw( arr ):
     plt.show()
 
 #------------------------------------------------
+
 def gen10th( arr ):
     "return index,distance pairs for every 10th element"
     for i in xrange(len(arr)/10):
@@ -105,12 +107,44 @@ def drawScan():
     plt.show()
 
 
+def maizeHeight( filename ):
+    "count fraction of maize plants higher than 30cm"
+    # laser scanner tilted and mounted at 30cm
+    # only "back parts" are used
+    # used src_laser_* where array of 541 mm readings
+    count = 0
+    countMaize = 0
+    for line in open(filename):
+        if len(line)> 10: # skip short lines with number of updates
+            arr = eval(line)
+            assert len(arr) == 541, len(arr)
+            count += 1
+            arr = [x == 0 and 10000 or x for x in arr] 
+            if min(arr[:90]) < 1000 and  min(arr[-90:]) < 1000:
+                # compensate for potential tilt - must be both sides
+                countMaize += 1
+    return count, countMaize
+
+def statMaizeHeight( roots ):
+    totalCount, totalCountMaize = 0, 0
+    for root in roots:
+        for currentDir, dirs, files in os.walk( root ):
+            if "spin" in currentDir or "followme" in currentDir:
+                continue
+            for name in files:
+                if name.startswith("src_laser"):
+                    count, countMaize = maizeHeight( filename=os.path.join(currentDir,name) )
+                    print name, count, countMaize
+                    totalCount += count
+                    totalCountMaize += countMaize
+    print totalCount, totalCountMaize, "%.2f" % (totalCountMaize/float(totalCount))
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print __doc__
         sys.exit(2)
-    draw( getArray(sys.argv[1]) )
+#    draw( getArray(sys.argv[1]) )
 #    drawScan()
-
+    statMaizeHeight( roots = sys.argv[1:] )
 # vim: expandtab sw=4 ts=4 
 
