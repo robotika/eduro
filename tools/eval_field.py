@@ -8,7 +8,7 @@ import sys
 import math
 import os
 import matplotlib.pyplot as plt
-
+import numpy as np
 
 def getArray( filename ):
     arr = []
@@ -18,7 +18,10 @@ def getArray( filename ):
     return arr
 
 def draw( arr ):
-    plt.plot(arr, 'o-', linewidth=2)
+    time = np.arange(0.0, len(arr)/10., 0.1)
+    plt.plot(time, arr, 'o-', linewidth=2)
+    plt.ylabel("gap size", fontsize=24)
+    plt.xlabel("time (sec)", fontsize=24)
     plt.show()
 
 #------------------------------------------------
@@ -143,8 +146,8 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print __doc__
         sys.exit(2)
-#    draw( getArray(sys.argv[1]) )
+    draw( getArray(sys.argv[1]) )
 #    drawScan()
-    statMaizeHeight( roots = sys.argv[1:] )
+#    statMaizeHeight( roots = sys.argv[1:] )
 # vim: expandtab sw=4 ts=4 
 
