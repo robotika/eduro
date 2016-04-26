@@ -166,6 +166,9 @@ class LaserIP( Laser ):
     if len(data) == 1120:
       dist = [int(x,16) for x in data[26:541+26]]
       remission = [int(x,16) for x in data[541+26+7:-5]]
+    elif len(data) == 583:
+      dist = [int(x,16) for x in data[26:271+26]]
+      remission = [int(x,16) for x in data[304:-5]]
     else:
       dist = [int(x,16) for x in data[26:-6]]
     return dist, remission
