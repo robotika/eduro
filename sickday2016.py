@@ -48,6 +48,12 @@ def setupGripperModule(can):
 def gripperServo(can, left, right):
     can.sendData( 0x37F, [0,0,0,0, left & 0xFF, (left >> 8)&0xFF, right & 0xFF, (right >> 8)&0xFF] )  
 
+def gripperOpen(robot):
+    gripperServo(robot.can, 32512, 51200)
+
+def gripperClose(robot):
+    gripperServo(robot.can, 43520, 32512)
+
 
 class SICKRobotDay2016:
     def __init__(self, robot, code, verbose = False):
@@ -97,11 +103,11 @@ class SICKRobotDay2016:
         # Go straight for 2 meters
         print "ver0", self.robot.battery
 
-        gripperServo(self.robot.can, 32512, 51200)  # open
+        gripperOpen(self.robot)
         self.driver.goStraight(0.3, timeout=30)
-        gripperServo(self.robot.can, 43520, 32512)  # close
+        gripperClose(self.robot)
         self.driver.goStraight(2.0, timeout=30)
-        gripperServo(self.robot.can, 32512, 51200)  # open
+        gripperOpen(self.robot)
         self.driver.goStraight(-0.3, timeout=30)
 
         print 'Game over.', self.robot.battery
