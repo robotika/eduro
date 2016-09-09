@@ -14,8 +14,13 @@ from time import sleep
 from collections import namedtuple
 from itertools import groupby
 
+from threading import Thread, Event, Lock 
+
 STX = chr(2)
 ETX = chr(3)
+
+HOST = '192.168.3.1'
+PORT = 2111
 
 
 scan_complete_nt=namedtuple('scan_complete',('idlen', 'id', 'antena', 'RSSI1', 'RSSI2', 'RSSI3', 'RSSI4', 'power1', 'power2', 'power3', 'power4'))
@@ -102,15 +107,40 @@ class RFU620():
             print("unexpected answer for scan: "+repr(reply))
         return result
 
+
 def distance(RSSI, power):
     #RSSI (dBm) = -10n log10(d) + A
     c=2.5 #(n ranges from 2 to 4)
     d = 10. ** ((-RSSI - power) / (10.*c))
     return d
 
+
+class RFU620Reader(Thread):
+    def __init__(self):
+        Thread.__init__(self)
+        self.shouldIRun = Event()
+        self.shouldIRun.set() 
+        self.rf = RFU620(HOST, PORT, verbose=False)
+        self.rf.setpower(240)
+        self.index = 1
+        self._data = None
+
+    def run(self):
+        while self.shouldIRun.isSet(): 
+            samples = self.rf.scan()
+            self._data = (index, samples)
+            self.index += 1
+
+    def getScanData(self):
+        return self._data
+
+    def requestStop(self):
+        self.shouldIRun.clear() 
+
+
 from math import log
 if __name__ == "__main__":
-    rf=RFU620('192.168.3.1', 2111, verbose=True)
+    rf=RFU620(HOST, PORT, verbose=True)
     rf.setpower(240)
     with open("rfid-scan.txt", 'w') as f:
         while True:

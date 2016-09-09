@@ -20,6 +20,8 @@ from hand import handPositionExtension
 from rfid import RFID
 from barcode import BarcodeReader
 from raspi import RasPi
+from rfu620 import RFU620Reader
+
 
 def processedRFID( rfidData ):
   if rfidData and len(rfidData) == 10:
@@ -250,6 +252,22 @@ class EduroMaxi( Robot ):
     self.nodeData = None
     self.addExtension( nodeDataExtension )
 
+  def attachRFU620(self):
+    if self.replyLog is None:
+      self.rfu620 = RF620Reader()
+      name = timeName( "logs/src_rfu620_", "log" )
+      if self.metaLog:
+        self.metaLog.write("RFU620LOG:\t" + name + "\n")
+        self.metaLog.flush()
+      self.registerDataSource( 'rfu620', SourceLogger( self.rfu620.getScanData, name ).get )
+    else:
+      self.rfu620 = DummyGPS()
+      assert self.metaLog
+      srcLog = self.metaLogName( "RFU620LOG:" )
+      print "RFU620LOG:", srcLog
+      self.registerDataSource( 'rfu620', SourceLogger( None, srcLog ).get )
+    self.rfu620Data = None
+    self.addExtension( rfu620DataExtension )
 
 def gpsDataExtension( robot, id, data ):
   if id=='gps':
@@ -301,6 +319,10 @@ def rfidDataExtension( robot, id, data ):
 def nodeDataExtension( robot, id, data ):
   if id=='node':
     robot.nodeData = data
+
+def rfu620DataExtension( robot, id, data ):
+  if id=='rfu620':
+    robot.rfu620Data = data
 
 def buildRobot( robot, attachedGPS = False, attachedCamera = False, cameraExe = None, attachedLaser = False, replyLog = None ):
   "attach various sensors to 'robot base'"

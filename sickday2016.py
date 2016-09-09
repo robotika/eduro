@@ -72,6 +72,7 @@ class SICKRobotDay2016:
 #        self.robot.attachLaser( index=2, remission=True, usb=True, 
 #                pose=((0.19, 0.0, 0.055), tuple([math.radians(x) for x in (0, 180, 0)])), 
 #                errLog = self.robot.metaLog )
+        self.robot.attachRFU620()
         
         self.driver = Driver( self.robot, maxSpeed = 0.5, maxAngularSpeed = math.radians(180) )
         self.robot.localisation = SimpleOdometry()
@@ -89,6 +90,7 @@ class SICKRobotDay2016:
 #            self.robot.laser.start()    # laser also after start -- it should be already running
 #            self.robot.laser2.start() 
             self.robot.camera.start()
+            self.robot.rfu620.start()
             self.robot.localisation = SimpleOdometry()
             while True:
                 self.ver0(verbose = self.verbose)            
@@ -96,6 +98,7 @@ class SICKRobotDay2016:
             print "EmergencyStopException"
 #        self.robot.laser.requestStop()
 #        self.robot.laser2.requestStop() 
+        self.robot.rfu620.requestStop()
         self.robot.camera.requestStop()
 
 
@@ -106,7 +109,10 @@ class SICKRobotDay2016:
         gripperOpen(self.robot)
         self.driver.goStraight(0.3, timeout=30)
         gripperClose(self.robot)
-        self.driver.goStraight(2.0, timeout=30)
+        for cmd in self.driver.goStraightG(2.0):
+            self.robot.setSpeedPxPa(*cmd)
+#            print self.robot.rfu620Data
+            self.robot.update()
         gripperOpen(self.robot)
         self.driver.goStraight(-0.3, timeout=30)
 
