@@ -111,6 +111,15 @@ def distance(RSSI, power):
 from math import log
 if __name__ == "__main__":
     rf=RFU620('192.168.3.1', 2111, verbose=True)
+    rf.setpower(240)
+    with open("rfid-scan.txt", 'w') as f:
+        while True:
+            samples = rf.scan()
+            f.write(repr(samples) + '\n')
+            if samples:
+                print('; '.join(['{s.id:X} {s.RSSI:4.1f}'.format(s=s) for s in samples]))
+
+
     #rf.readPowerConfig()
     """
     for power in (30,100, 230,231, 240, 241):
@@ -140,6 +149,6 @@ if __name__ == "__main__":
                 rssi=sum(rssis)/len(rssis)
                 power=powers[0]
                 n=(-rssi-power)/log(di,10)/10.
-                print("r=%4.1f, d=%.2fm, n=%.2f; "%(rssi, distance(rssi, power), n), end='')
+                print("%X, r=%4.1f, d=%.2fm, n=%.2f; "%(id, rssi, distance(rssi, power), n), end='')
             print('')
             sleep(0.2)
