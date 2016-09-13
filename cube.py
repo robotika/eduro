@@ -21,6 +21,31 @@ if OSGAR_ROOT not in sys.path:
 from velodyne import Velodyne, LASER_ANGLES
 from apyros.metalog import MetaLog, disableAsserts
 
+import numpy as np
+
+
+def load_background():
+#    return np.zeros((360, 16), dtype=np.uint16)  # default = no action
+#    return np.full((360, 16), 1000, dtype=np.uint16)  # just for subtraction test
+    return np.loadtxt('cube-background.txt', dtype=np.uint16)
+
+
+def save_background(arr, filename):
+    f = open(filename, 'w')
+    for i in xrange(360):
+        for j in xrange(16):
+            f.write('{} '.format(arr[i][j]))
+        f.write('\n')
+    f.close()
+
+
+def remove_background(scan, ground):
+    mask = scan >= background
+    ret = scan.copy()
+    ret[mask] = 0
+    return ret
+
+
 def print_data(scan):
     print [x for a,x in sorted(zip(LASER_ANGLES, scan[0]))]
     print
@@ -52,12 +77,14 @@ if __name__ == "__main__":
         thr.requestStop()
         thr.join()
     else:
+        background = load_background()
         prev = None
         for i in xrange(10000):
             sensor.update()
             curr = sensor.scan_index, sensor.dist_index
             if prev != curr:
-                print_data(sensor.dist)
+                data = remove_background(sensor.dist, background)
+                print_data(data)
 #                if sensor.scan_index % 10 == 0:
 #                    print curr
             prev = curr
