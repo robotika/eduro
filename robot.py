@@ -26,6 +26,11 @@ def sint16( data ):
     ret = ret-0x10000
   return ret
 
+# hack for parsing RFU620 data via eval()
+def scan(id, RSSI, power):
+  return id, RSSI, power
+
+
 class SourceLogger:
   def __init__( self, sourceGet, filename ):
     self.sourceGet = sourceGet
