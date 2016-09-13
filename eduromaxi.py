@@ -254,7 +254,7 @@ class EduroMaxi( Robot ):
 
   def attachRFU620(self):
     if self.replyLog is None:
-      self.rfu620 = RF620Reader()
+      self.rfu620 = RFU620Reader()
       name = timeName( "logs/src_rfu620_", "log" )
       if self.metaLog:
         self.metaLog.write("RFU620LOG:\t" + name + "\n")

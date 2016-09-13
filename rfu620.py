@@ -19,7 +19,7 @@ from threading import Thread, Event, Lock
 STX = chr(2)
 ETX = chr(3)
 
-HOST = '192.168.3.1'
+HOST = '192.168.2.10'
 PORT = 2111
 
 
@@ -128,7 +128,7 @@ class RFU620Reader(Thread):
     def run(self):
         while self.shouldIRun.isSet(): 
             samples = self.rf.scan()
-            self._data = (index, samples)
+            self._data = (self.index, samples)
             self.index += 1
 
     def getScanData(self):
