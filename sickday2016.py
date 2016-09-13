@@ -68,7 +68,7 @@ class SICKRobotDay2016:
 #                url = "http://192.168.0.99/image?res=full&x0=352&y0=80&x1=992&y1=592&quality=12&doublescan=0" )
         self.robot.attachCamera(sleep=0.5)
 #        self.robot.addExtension( cameraDataExtension )
-#        self.robot.attachLaser( pose=((0.14, 0.0, 0.32), (0,0,0)) )
+        self.robot.attachLaser( remission=True, pose=((0.14, 0.0, 0.32), (0,math.radians(180),0)) )
 #        self.robot.attachLaser( index=2, remission=True, usb=True, 
 #                pose=((0.19, 0.0, 0.055), tuple([math.radians(x) for x in (0, 180, 0)])), 
 #                errLog = self.robot.metaLog )
@@ -87,16 +87,17 @@ class SICKRobotDay2016:
 #                print "Powering laser ON"
 #                self.robot.laser.startLaser() 
             self.robot.waitForStart()
-#            self.robot.laser.start()    # laser also after start -- it should be already running
+            self.robot.laser.start()    # laser also after start -- it should be already running
 #            self.robot.laser2.start() 
             self.robot.camera.start()
             self.robot.rfu620.start()
             self.robot.localisation = SimpleOdometry()
             while True:
                 self.ver0(verbose = self.verbose)            
+#                self.test_square(verbose = self.verbose)            
         except EmergencyStopException, e:
             print "EmergencyStopException"
-#        self.robot.laser.requestStop()
+        self.robot.laser.requestStop()
 #        self.robot.laser2.requestStop() 
         self.robot.rfu620.requestStop()
         self.robot.camera.requestStop()
@@ -111,7 +112,7 @@ class SICKRobotDay2016:
         gripperClose(self.robot)
         for cmd in self.driver.goStraightG(2.0):
             self.robot.setSpeedPxPa(*cmd)
-#            print self.robot.rfu620Data
+            print self.robot.rfu620Data
             self.robot.update()
         gripperOpen(self.robot)
         self.driver.goStraight(-0.3, timeout=30)
@@ -121,6 +122,13 @@ class SICKRobotDay2016:
             self.robot.setSpeedPxPa(0.0, 0.0)
             self.robot.update()
         raise EmergencyStopException() # TODO: Introduce GameOverException as in Eurobot
+
+
+    def test_square( self, verbose=False ):
+        print "test_square", self.robot.battery
+        while True:
+            self.driver.turn(angle=math.radians(90), timeout=30)
+            self.driver.goStraight(1.0, timeout=30)
 
 
     def __call__( self ):
