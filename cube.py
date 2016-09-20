@@ -51,6 +51,18 @@ def print_data(scan):
     print
 
 
+##################### small SICK laser scanner #####################
+
+def detect_cubes(raw_laser_data):
+    arr = np.array(raw_laser_data)
+    mask = arr == 0
+    arr[mask] = 10000
+    blind_offset = 90
+    index = np.argmin(arr[blind_offset:]) + blind_offset
+    if arr[index] < 2000:  # 2 meters
+        return [(index, arr[index])]
+    return []
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print __doc__
