@@ -86,15 +86,18 @@ class SICKRobotDay2016:
                 # trigger rotation of the laser, low level function, ignore for log files
 #                print "Powering laser ON"
 #                self.robot.laser.startLaser() 
+            gripperOpen(self.robot)
             self.robot.waitForStart()
             self.robot.laser.start()    # laser also after start -- it should be already running
 #            self.robot.laser2.start() 
             self.robot.camera.start()
             self.robot.rfu620.start()
             self.robot.localisation = SimpleOdometry()
+
             while True:
-                self.ver0(verbose = self.verbose)            
+                self.ver1(verbose = self.verbose)            
 #                self.test_square(verbose = self.verbose)            
+
         except EmergencyStopException, e:
             print "EmergencyStopException"
         self.robot.laser.requestStop()
@@ -102,26 +105,54 @@ class SICKRobotDay2016:
         self.robot.rfu620.requestStop()
         self.robot.camera.requestStop()
 
-
-    def ver0( self, verbose=False ):
-        # Go straight for 2 meters
-        print "ver0", self.robot.battery
-
-        gripperOpen(self.robot)
+    def load_cube(self):
         self.driver.goStraight(0.3, timeout=30)
         gripperClose(self.robot)
-        for cmd in self.driver.goStraightG(2.0):
-            self.robot.setSpeedPxPa(*cmd)
-            print self.robot.rfu620Data
-            self.robot.update()
+
+    def place_cube(self):
         gripperOpen(self.robot)
         self.driver.goStraight(-0.3, timeout=30)
 
+    def game_over(self):
         print 'Game over.', self.robot.battery
         for k in xrange(10):
             self.robot.setSpeedPxPa(0.0, 0.0)
             self.robot.update()
         raise EmergencyStopException() # TODO: Introduce GameOverException as in Eurobot
+
+
+    def ver0( self, verbose=False ):
+        # Go straight for 2 meters
+        print "ver0", self.robot.battery
+
+        self.load_cube()
+        for cmd in self.driver.goStraightG(2.0):
+            self.robot.setSpeedPxPa(*cmd)
+            print self.robot.rfu620Data
+            self.robot.update()
+        self.place_cube()
+        self.game_over()
+
+
+    def ver1(self, verbose=False):
+        # Navigate on polyline
+        print "ver1", self.robot.battery
+
+        self.load_cube()
+        pts = [(0, 0), (1.0, 0), (1.0, 1.0), (2.0, 1.0)]
+        for cmd in self.driver.followPolyLineG(pts):
+            self.robot.setSpeedPxPa(*cmd)
+            self.robot.update()
+        self.place_cube()
+
+        self.driver.turn(angle=math.radians(180), timeout=30)
+
+        pts.reverse()  # return path home
+        for cmd in self.driver.followPolyLineG(pts):
+            self.robot.setSpeedPxPa(*cmd)
+            self.robot.update()
+
+        self.game_over()
 
 
     def test_square( self, verbose=False ):
