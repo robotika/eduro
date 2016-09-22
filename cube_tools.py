@@ -11,7 +11,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 color = "r" # "y"
-cubeSize = 0.16
 
 
 def getOutlines( regions ):
@@ -59,36 +58,55 @@ def findCubes( img, color ):
     cv2.imwrite( "img3.png", img )
 
 
-def checkLog( logFile ):
+def checkLog( logFile, num ):
     f = open(logFile, "r")
+    ii = 0
     for line in f:
         if line[0] == "[":
+            if ii != num:
+                ii += 1
+                continue
             scan = eval(line)
-            cubesFromScan( scan, test = True )
+            target = cubesFromScan( scan, test = True )
+            print target
             sys.exit()
             
 
-def getCoordinates(dist, ang):
+def getCoordinates(dist, ang, laserXY = None):
+    #print type(dist)
+    if type(dist) == list:
+        dist = np.array(dist)
+    if type(ang) == list:
+        ang = np.array(ang)
     X = np.cos( np.radians( ang ) ) * dist
     Y = np.sin( np.radians( -ang ) ) * dist
+    if laserXY:
+        X = X + laserXY[0]
+        Y = Y + laserXY[1]
     return X, Y
     
 
 
-def cubesFromScan( scan, maxDist = 2.0, minDiff = 0.05, test = False ):
-    distAr = np.array(scan[40:])/1000.0
-    angAr = np.arange( -95.0, 136.0 )
+
+def cubesFromScan( scan, maxDist = 2.0, minDiff = 0.1, cubeSize = 0.16, laserXY = [0.27, -0.13] , test = False ):
+    distAr = np.array(scan[40:])/1000.0 # 0:40 -> only robot, no cube TODO
+    angAr = np.arange( -135, 136.0 )
+    angAr = angAr[40:]
     distAr[ distAr > maxDist] = np.nan
     diffAr = np.diff( distAr )
-    barriers = []
+    #print distAr
+    #print diffAr
+    barriers = None
     itemD = []
     itemA = []
     ii = 0
     for dd in diffAr:
-        if dd > minDiff or np.isnan(dd):
+        if abs(dd) > minDiff or np.isnan(dd):
             itemD.append( distAr[ii] )
             itemA.append( angAr[ii] )
             if len(itemD) > 1:
+                if barriers is None:
+                    barriers = []
                 barriers.append( [itemD, itemA] )
             itemD = []
             itemA = []
@@ -97,39 +115,71 @@ def cubesFromScan( scan, maxDist = 2.0, minDiff = 0.05, test = False ):
             itemD.append( distAr[ii] )
             itemA.append( angAr[ii] )
         ii += 1
+    itemD.append( distAr[ii] )
+    itemA.append( angAr[ii] )
+    if len(itemD) > 1:
+        if barriers is None:
+            barriers = []
+        barriers.append( [itemD, itemA] )
         
-    cubes = []
+    cubes = None
     for bar, ang in barriers:
         x0, y0 = getCoordinates( bar[0], ang[0] )
         x1, y1 = getCoordinates( bar[-1], ang[-1] )
         pointDist = np.linalg.norm( [ x0 - x1, y0 - y1 ] )
-        print pointDist
+        #print pointDist
         
         if pointDist > 0.8*cubeSize and pointDist < 1.5*cubeSize:
+            if cubes is None:
+                cubes = []
             cubes.append( [bar, ang] )
-    
+            
+    result = None
+    if cubes:
+        cubeDist = []
+        for cub in cubes:
+            cubeDist.append( min(cub[0]) )
+
+        idCub = np.argmin( cubeDist )
+        myCube = cubes[idCub]
+        minId = np.argmin(myCube[0])
+        myCubeMin = [ myCube[0][minId], myCube[1][minId] ]
+        centerId = len(myCube[0])/2 #TODO real centroid?
+        myCubeCentr = [ myCube[0][centerId], myCube[1][centerId] ]
+        
+        result = np.zeros( [2,2] )
+        result[0,:] = getCoordinates( myCubeMin[0], myCubeMin[1], laserXY )
+        result[1,:] = getCoordinates( myCubeCentr[0], myCubeCentr[1], laserXY )
+        
+        
     if test:
         #print distAr, angAr, diffAr
         #print barriers
-        corX = np.cos( np.radians( angAr ) ) * distAr
-        corY = np.sin( np.radians( -angAr ) ) * distAr
+        corX, corY = getCoordinates( distAr, angAr, laserXY )
         #print corX, corY
         plt.figure(figsize = (10,10))
-        plt.plot(corX, corY, "o-")
+        plt.plot(0,0, "k+", ms = 20)
+        plt.plot(corX, corY, "o-") #RuntimeWarning: ... ?
         for d, a in barriers:
             #print d, a
+            #print "#########"
             d = np.array(d)
             a = np.array(a)
-            x = np.cos( np.radians( a ) ) * d
-            y = np.sin( np.radians( -a ) ) * d
+            x, y = getCoordinates( d, a, laserXY )
             #print x, y
             plt.plot(x, y, "ro-")
         for cD, cA in cubes:
             cD = np.array(cD)
             cA = np.array(cA)
-            x, y = getCoordinates( cD, cA )
+            x, y = getCoordinates( cD, cA, laserXY )
             plt.plot(x, y, "go-")
+        x, y = getCoordinates( myCube[0], myCube[1], laserXY )
+        plt.plot(x, y, "ko-")
+        plt.plot(result[0,0], result[0,1], "yo", ms = 8)
+        plt.plot(result[1,0], result[1,1], "y+", ms = 8)
         plt.show()
+    
+    return result
 
 
 
@@ -144,4 +194,5 @@ if __name__ == "__main__":
         findCubes( im, color )
     elif switch == "l":
         logFile = sys.argv[2]
-        checkLog( logFile )
+        scanNum = int(sys.argv[3])
+        checkLog( logFile, scanNum )
