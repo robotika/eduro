@@ -98,6 +98,8 @@ class SICKRobotDay2016:
 #                self.robot.laser.startLaser() 
             gripperOpen(self.robot)
             self.robot.waitForStart()
+            start_time = self.robot.time
+
             self.robot.laser.start()    # laser also after start -- it should be already running
 #            self.robot.laser2.start() 
             self.robot.camera.start()
@@ -110,7 +112,7 @@ class SICKRobotDay2016:
                 self.test_pick_cube(verbose = self.verbose)
 
         except EmergencyStopException, e:
-            print "EmergencyStopException"
+            print "EmergencyStopException at {} sec".format(self.robot.time - start_time)
         self.robot.laser.requestStop()
 #        self.robot.laser2.requestStop() 
         self.robot.rfu620.requestStop()
