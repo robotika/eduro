@@ -22,6 +22,11 @@ def draw( arr ):
     plt.plot(time, arr, 'o-', linewidth=2)
     plt.ylabel("gap size", fontsize=24)
     plt.xlabel("time (sec)", fontsize=24)
+    
+    plt.annotate('obstacle', xy=(171.3, 1.8), xytext=(128, 2.8),
+            arrowprops=dict(facecolor='red', shrink=0.05),
+            )
+    
     plt.show()
 
 #------------------------------------------------
