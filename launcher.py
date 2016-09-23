@@ -127,7 +127,7 @@ def launch(cmd_args, robotFactory, task, configFn = None, canArgs={}):
       robot.addExtension( viewLogExtension )
 #      robot.addExtension( viewCompassExtension )
       robot.addExtension( viewPoseExtension )
-      laserViewer = LaserViewer( robot, distanceLimit = 2.0, sideLimit = 10 )
+      laserViewer = LaserViewer( robot, distanceLimit = 20.0, sideLimit = 10 )
     if isFromLog:
       view = ViewCameraExtension( os.path.dirname( sys.argv[3] ) )
       robot.addExtension( view.viewCameraExtension )         
