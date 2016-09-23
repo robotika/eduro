@@ -119,19 +119,52 @@ class SICKRobotDay2016:
         self.robot.camera.requestStop()
 
     def load_cube(self):
+        print "load cube"
         self.driver.goStraight(0.3, timeout=30)
         gripperClose(self.robot)
 
     def place_cube(self):
+        print "place cube"
         gripperOpen(self.robot)
         self.driver.goStraight(-0.3, timeout=30)
 
     def game_over(self):
-        print 'Game over.', self.robot.battery
+        print 'Game over (battery status = {}V)'.format(self.robot.battery)
         for k in xrange(10):
             self.robot.setSpeedPxPa(0.0, 0.0)
             self.robot.update()
         raise EmergencyStopException() # TODO: Introduce GameOverException as in Eurobot
+
+
+    def find_cube(self, timeout):
+        print "find_cube"
+        prev = None
+        cubes = []
+        goal = None
+        gen = self.driver.goStraightG(1.0)
+        startTime = self.robot.time
+        while self.robot.time < startTime + timeout:
+            for cmd in gen:
+                self.robot.setSpeedPxPa(*cmd)
+                self.robot.update()
+                if prev != self.robot.laserData:
+                    prev = self.robot.laserData
+                    cubes = detect_cubes(self.robot.laserData)
+                    if len(cubes) > 0:
+                        deg_angle, mm_dist = cubes[0]
+                        angle, dist = math.radians(135-deg_angle), mm_dist/1000.0
+                        pos = self.robot.laser.pose[0][0] + math.cos(angle)*dist, self.robot.laser.pose[0][1] + math.sin(angle)*dist, 0
+                        cube_x, cube_y = pos[:2]
+                        if 0.0 < cube_x < 0.4 and -0.1 < cube_y < 0.1:
+                            print cube_x, cube_y
+                            self.robot.setSpeedPxPa(0, 0)
+                            self.robot.update()
+                            return True
+                        goal = combinedPose(self.robot.localisation.pose(), pos)[:2]
+                        gen = self.driver.goToG(goal, finishRadius=0.1)
+                        break
+        print "TIMEOUT"
+        return False
 
 
     def ver0( self, verbose=False ):
@@ -174,28 +207,14 @@ class SICKRobotDay2016:
             self.driver.turn(angle=math.radians(90), timeout=30)
             self.driver.goStraight(1.0, timeout=30)
 
+
     def test_pick_cube(self, verbose=False):
         print "test_pick_cube", self.robot.battery
-        prev = None
-        cubes = []
-        goal = None
-        gen = self.driver.goStraightG(1.0)
-        while True:
-            for cmd in gen:
-                self.robot.setSpeedPxPa(*cmd)
-                self.robot.update()
-                if prev != self.robot.laserData:
-                    prev = self.robot.laserData
-                    cubes = detect_cubes(self.robot.laserData)
-                    if len(cubes) > 0:
-                        deg_angle, mm_dist = cubes[0]
-                        angle, dist = math.radians(135-deg_angle), mm_dist/1000.0
-                        pos = self.robot.laser.pose[0][0] + math.cos(angle)*dist, self.robot.laser.pose[0][1] + math.sin(angle)*dist, 0
-                        goal = combinedPose(self.robot.localisation.pose(), pos)[:2]
-                        gen = self.driver.goToG(goal, finishRadius=0.1)
-#                        print cubes, goal
-                        break
-            
+        if self.find_cube(timeout=20.0):
+            self.load_cube()
+        self.game_over()
+
+
 
     def __call__( self ):
         print "RUNNING:", self.code
