@@ -36,6 +36,7 @@ from sdoplg import ReadSDO, WriteSDO
 
 import starter
 
+from cube import detect_cubes
 
 def setupGripperModule(can): 
     writer = WriteSDO( 0x7F, 0x2100, 1, [0xF] )  # enable servos
@@ -54,6 +55,13 @@ def gripperOpen(robot):
 def gripperClose(robot):
     gripperServo(robot.can, 43520, 32512)
 
+def rfu620CANReaderExtension(robot, id, data):
+    if id == 0x294:
+        assert len(data) == 4, len(data)
+#        if data != [0, 0, 0, 0]:
+#        print data
+    if id == 0x480:
+        print data
 
 class SICKRobotDay2016:
     def __init__(self, robot, code, verbose = False):
@@ -63,12 +71,14 @@ class SICKRobotDay2016:
         self.code = code
         self.robot.attachEmergencyStopButton()
 
+        self.robot.addExtension(rfu620CANReaderExtension)
+
         # do we want some processing?
 #        self.robot.attachCamera( cameraExe = "../digits/digits", 
 #                url = "http://192.168.0.99/image?res=full&x0=352&y0=80&x1=992&y1=592&quality=12&doublescan=0" )
         self.robot.attachCamera(sleep=0.5)
 #        self.robot.addExtension( cameraDataExtension )
-        self.robot.attachLaser( remission=True, pose=((0.14, 0.0, 0.32), (0,math.radians(180),0)) )
+        self.robot.attachLaser( remission=True, pose=((0.24, -0.13, 0.08), (0,math.radians(180),0)) )
 #        self.robot.attachLaser( index=2, remission=True, usb=True, 
 #                pose=((0.19, 0.0, 0.055), tuple([math.radians(x) for x in (0, 180, 0)])), 
 #                errLog = self.robot.metaLog )
@@ -95,8 +105,9 @@ class SICKRobotDay2016:
             self.robot.localisation = SimpleOdometry()
 
             while True:
-                self.ver1(verbose = self.verbose)            
+#                self.ver0(verbose = self.verbose)            
 #                self.test_square(verbose = self.verbose)            
+                self.test_pick_cube(verbose = self.verbose)
 
         except EmergencyStopException, e:
             print "EmergencyStopException"
@@ -161,6 +172,28 @@ class SICKRobotDay2016:
             self.driver.turn(angle=math.radians(90), timeout=30)
             self.driver.goStraight(1.0, timeout=30)
 
+    def test_pick_cube(self, verbose=False):
+        print "test_pick_cube", self.robot.battery
+        prev = None
+        cubes = []
+        goal = None
+        gen = self.driver.goStraightG(1.0)
+        while True:
+            for cmd in gen:
+                self.robot.setSpeedPxPa(*cmd)
+                self.robot.update()
+                if prev != self.robot.laserData:
+                    prev = self.robot.laserData
+                    cubes = detect_cubes(self.robot.laserData)
+                    if len(cubes) > 0:
+                        deg_angle, mm_dist = cubes[0]
+                        angle, dist = math.radians(135-deg_angle), mm_dist/1000.0
+                        pos = self.robot.laser.pose[0][0] + math.cos(angle)*dist, self.robot.laser.pose[0][1] + math.sin(angle)*dist, 0
+                        goal = combinedPose(self.robot.localisation.pose(), pos)[:2]
+                        gen = self.driver.goToG(goal, finishRadius=0.1)
+#                        print cubes, goal
+                        break
+            
 
     def __call__( self ):
         print "RUNNING:", self.code

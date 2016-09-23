@@ -55,7 +55,7 @@ def print_data(scan):
 
 def detect_cubes(raw_laser_data):
     arr = np.array(raw_laser_data)
-    mask = arr == 0
+    mask = arr < 200
     arr[mask] = 10000
     blind_offset = 90
     index = np.argmin(arr[blind_offset:]) + blind_offset
