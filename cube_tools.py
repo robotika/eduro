@@ -2,7 +2,7 @@
 """
   Sick robot day 2016
   usage:
-       python tools.py <image file>
+       python cube_tools.py [im <image file>|l <laser log> <index>]
            
 """
 import sys
