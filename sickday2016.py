@@ -73,50 +73,15 @@ class SICKRobotDay2016:
 
         self.robot.addExtension(rfu620CANReaderExtension)
 
-        # do we want some processing?
-#        self.robot.attachCamera( cameraExe = "../digits/digits", 
-#                url = "http://192.168.0.99/image?res=full&x0=352&y0=80&x1=992&y1=592&quality=12&doublescan=0" )
         self.robot.attachCamera(sleep=0.5)
-#        self.robot.addExtension( cameraDataExtension )
         self.robot.attachLaser( remission=True, pose=((0.24, -0.13, 0.08), (0,math.radians(180),0)) )
-#        self.robot.attachLaser( index=2, remission=True, usb=True, 
-#                pose=((0.19, 0.0, 0.055), tuple([math.radians(x) for x in (0, 180, 0)])), 
-#                errLog = self.robot.metaLog )
         self.robot.attachRFU620()
         
         self.driver = Driver( self.robot, maxSpeed = 0.5, maxAngularSpeed = math.radians(180) )
         self.robot.localisation = SimpleOdometry()
         
-#        self.robot.laser.stopOnExit = False    # for faster boot-up
+        self.robot.laser.stopOnExit = False    # for faster boot-up
 
-
-    def run( self ):
-        try:
-#            if getattr( self.robot.laser, 'startLaser', None ):
-                # trigger rotation of the laser, low level function, ignore for log files
-#                print "Powering laser ON"
-#                self.robot.laser.startLaser() 
-            gripperOpen(self.robot)
-            self.robot.waitForStart()
-            start_time = self.robot.time
-
-            self.robot.laser.start()    # laser also after start -- it should be already running
-#            self.robot.laser2.start() 
-            self.robot.camera.start()
-            self.robot.rfu620.start()
-            self.robot.localisation = SimpleOdometry()
-
-            while True:
-#                self.ver0(verbose = self.verbose)            
-#                self.test_square(verbose = self.verbose)            
-                self.test_pick_cube(verbose = self.verbose)
-
-        except EmergencyStopException, e:
-            print "EmergencyStopException at {} sec".format(self.robot.time - start_time)
-        self.robot.laser.requestStop()
-#        self.robot.laser2.requestStop() 
-        self.robot.rfu620.requestStop()
-        self.robot.camera.requestStop()
 
     def load_cube(self):
         print "load cube"
@@ -216,7 +181,31 @@ class SICKRobotDay2016:
             self.load_cube()
         self.game_over()
 
+    def run( self ):
+        try:
+            if getattr( self.robot.laser, 'startLaser', None ):
+                # trigger rotation of the laser, low level function, ignore for log files
+                print "Powering laser ON"
+                self.robot.laser.startLaser() 
+            gripperOpen(self.robot)
+            self.robot.waitForStart()
+            start_time = self.robot.time
 
+            self.robot.laser.start()    # laser also after start -- it should be already running
+            self.robot.camera.start()
+            self.robot.rfu620.start()
+            self.robot.localisation = SimpleOdometry()
+
+            while True:
+#                self.ver0(verbose = self.verbose)            
+#                self.test_square(verbose = self.verbose)            
+                self.test_pick_cube(verbose = self.verbose)
+
+        except EmergencyStopException, e:
+            print "EmergencyStopException at {} sec".format(self.robot.time - start_time)
+        self.robot.laser.requestStop()
+        self.robot.rfu620.requestStop()
+        self.robot.camera.requestStop()
 
     def __call__( self ):
         print "RUNNING:", self.code
