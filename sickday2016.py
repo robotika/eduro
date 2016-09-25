@@ -37,6 +37,7 @@ from sdoplg import ReadSDO, WriteSDO
 import starter
 
 from cube import detect_cubes
+import numpy as np
 
 def setupGripperModule(can): 
     writer = WriteSDO( 0x7F, 0x2100, 1, [0xF] )  # enable servos
@@ -63,6 +64,26 @@ def rfu620CANReaderExtension(robot, id, data):
     if id == 0x480:
 #        print data
         robot.canRFID = data
+
+
+def is_path_blocked(raw_laser_data, raw_remission_data):
+    # TODO asymetric filtering based on laser position
+    # TODO use reference array for safety area
+    # TODO move to separate file??
+    arr = np.array(raw_laser_data, dtype=np.uint16)
+    rem_arr = np.array(raw_remission_data[:-3], dtype=np.uint16)  # what are the 3 extra values 0, 1, 11?!
+    assert len(arr) == len(rem_arr), (len(arr), len(rem_arr))
+    arr[arr == 0] = 10000
+    arr[rem_arr < 50] = 10000
+    
+    m = min(arr[60:-60])  # 45 was not good in 2016-09-20 test(6)
+    if m < 200:
+        print m, arr[60:-60]
+    return m < 200
+
+def is_in_loading_zone(pose):
+    x, y, a = pose
+    return x < 1.0 and -0.5 < y < 0.5 # TODO setup proper boxes
 
 class SICKRobotDay2016:
     def __init__(self, robot, code, verbose = False):
@@ -169,7 +190,12 @@ class SICKRobotDay2016:
         for cmd in self.driver.followPolyLineG(pts):
             self.robot.setSpeedPxPa(*cmd)
             self.robot.update()
+            if (not is_in_loading_zone(self.robot.localisation.pose())
+                and is_path_blocked(self.robot.laserData, self.robot.remissionData)):
+                break
         self.place_cube()
+
+        # TODO handle offset in case of blocked path
 
         self.driver.turn(angle=math.radians(180), timeout=30)
 
@@ -193,6 +219,7 @@ class SICKRobotDay2016:
         if self.find_cube(timeout=20.0):
             self.load_cube()
         self.game_over()
+
 
     def run( self ):
         try:
