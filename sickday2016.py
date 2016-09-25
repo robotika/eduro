@@ -155,12 +155,14 @@ class SICKRobotDay2016:
                         angle, dist = math.radians(135-deg_angle), mm_dist/1000.0
                         pos = self.robot.laser.pose[0][0] + math.cos(angle)*dist, self.robot.laser.pose[0][1] + math.sin(angle)*dist, 0
                         cube_x, cube_y = pos[:2]
+                        print "{:.2f}\t{:.2f}".format(cube_x, cube_y)
+                        goal = combinedPose(self.robot.localisation.pose(), pos)[:2]
+                        viewlog.dumpBeacon(goal, color=(255, 255, 0)) 
                         if 0.0 < cube_x < 0.4 and -0.1 < cube_y < 0.1:
                             print cube_x, cube_y
                             self.robot.setSpeedPxPa(0, 0)
                             self.robot.update()
                             return True
-                        goal = combinedPose(self.robot.localisation.pose(), pos)[:2]
                         gen = self.driver.goToG(goal, finishRadius=0.1)
                         break
         print "TIMEOUT"
