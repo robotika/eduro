@@ -61,7 +61,8 @@ def rfu620CANReaderExtension(robot, id, data):
 #        if data != [0, 0, 0, 0]:
 #        print data
     if id == 0x480:
-        print data
+#        print data
+        robot.canRFID = data
 
 class SICKRobotDay2016:
     def __init__(self, robot, code, verbose = False):
@@ -71,6 +72,7 @@ class SICKRobotDay2016:
         self.code = code
         self.robot.attachEmergencyStopButton()
 
+        self.robot.canRFID = None
         self.robot.addExtension(rfu620CANReaderExtension)
 
         self.robot.attachCamera(sleep=0.5)
@@ -138,10 +140,21 @@ class SICKRobotDay2016:
         # Go straight for 2 meters
         print "ver0", self.robot.battery
 
+        prevRFID = self.robot.canRFID
         self.load_cube()
         for cmd in self.driver.goStraightG(2.0):
             self.robot.setSpeedPxPa(*cmd)
-            print self.robot.rfu620Data
+            if prevRFID != self.robot.canRFID:
+#                print self.robot.rfu620Data
+                print self.robot.canRFID
+                prevRFID = self.robot.canRFID
+                posXY = combinedPose(self.robot.localisation.pose(), (-0.35, 0.14, 0))[:2]
+                if self.robot.canRFID[-1] == 51:
+                    viewlog.dumpBeacon(posXY, color=(0, 0, 255))
+                elif self.robot.canRFID[-1] == 52:
+                    viewlog.dumpBeacon(posXY, color=(255, 0, 255))
+                else:
+                    viewlog.dumpBeacon(posXY, color=(255, 255, 255))
             self.robot.update()
         self.place_cube()
         self.game_over()
@@ -197,9 +210,10 @@ class SICKRobotDay2016:
             self.robot.localisation = SimpleOdometry()
 
             while True:
-#                self.ver0(verbose = self.verbose)            
-#                self.test_square(verbose = self.verbose)            
-                self.test_pick_cube(verbose = self.verbose)
+                self.ver0(verbose = self.verbose)
+#                self.ver1(verbose = self.verbose)
+#                self.test_square(verbose = self.verbose)
+#                self.test_pick_cube(verbose = self.verbose)
 
         except EmergencyStopException, e:
             print "EmergencyStopException at {} sec".format(self.robot.time - start_time)
