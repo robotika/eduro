@@ -59,8 +59,7 @@ class CubeTest(unittest.TestCase):
         1687, 1691, 1689, 1691]
 
         cubes = detect_cubes(data)
-#        self.assertEqual(cubes, [(99, 531), (135, 971)])
-        self.assertEqual(cubes, [(99, 531),])
+        self.assertEqual(cubes, [(91, 565),])  # cube angle center
 
 if __name__ == "__main__":
   unittest.main()
