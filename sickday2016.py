@@ -181,12 +181,8 @@ class SICKRobotDay2016:
         self.game_over()
 
 
-    def ver1(self, verbose=False):
-        # Navigate on polyline
-        print "ver1", self.robot.battery
-
+    def handle_single_cube(self, pts):
         self.load_cube()
-        pts = [(0, 0), (1.0, 0), (1.0, 1.0), (2.0, 1.0)]
         for cmd in self.driver.followPolyLineG(pts):
             self.robot.setSpeedPxPa(*cmd)
             self.robot.update()
@@ -204,6 +200,18 @@ class SICKRobotDay2016:
             self.robot.setSpeedPxPa(*cmd)
             self.robot.update()
 
+
+    def ver1(self, verbose=False):
+        # Navigate on polyline
+        print "ver1", self.robot.battery
+
+        paths = [
+            [(0, 0), (1.0, 0), (1.0, 1.0), (2.0, 1.0)],
+            [(0, 0), (2.0, 0.0)],
+            [(0, 0), (1.0, 0), (1.0, -1.0), (2.0, -1.0)],
+        ]
+        for pts in paths:
+            self.handle_single_cube(pts)
         self.game_over()
 
 
