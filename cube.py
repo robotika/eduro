@@ -22,6 +22,7 @@ from velodyne import Velodyne, LASER_ANGLES
 from apyros.metalog import MetaLog, disableAsserts
 
 import numpy as np
+import math
 
 
 def load_background():
@@ -67,10 +68,13 @@ def detect_cubes(raw_laser_data, verbose=False):
         while right_index < len(arr) and arr[right_index] < cube_max_dist:
             right_index += 1
         center_index = (left_index + right_index)/2
+        cube_size = math.radians(right_index - left_index) * arr[center_index]/1000.0
         if verbose:
             print left_index, index, right_index, '->', center_index
             print arr[left_index:right_index+1]
-        return [(center_index, arr[center_index])]
+            print "CUBE SIZE", cube_size
+        if 0.1 < cube_size < 0.25:
+            return [(center_index, arr[center_index])]
     return []
 
 if __name__ == "__main__":
