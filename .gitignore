@@ -1,0 +1,6 @@
+doc/*
+log/*
+serial/*
+*.log
+*.csv
+*.un~
