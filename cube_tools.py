@@ -13,6 +13,63 @@ import matplotlib.pyplot as plt
 color = "r" # "y"
 
 
+def getCubeCenter( dist, ang, ver = 0, test = False ):
+    center = None
+    xArr, yArr = getCoordinates(dist, ang)
+    if ver == 0: # the center of a conecting line between the firs and the last point.
+        center = xArr[0] + ( xArr[-1] - xArr[0] )/2.0, yArr[0] + ( yArr[-1] - yArr[0] )/2.0
+        print center
+    
+    elif ver == 1: #unreliable yet
+        #edge detection
+        step = 5
+        slopeList = []
+        for ii in range( 0, len(xArr), 2):
+            xItem = xArr[ii : ii+step]
+            yItem = yArr[ii : ii+step]
+            a, b = np.polyfit(xItem, yItem, 1)
+            slopeList.append(a)
+        slopeArr = np.array(slopeList)
+        angArr = np.arctan(slopeArr)
+        diffArr = abs(np.diff( angArr ))
+        edgeId = np.argmax( diffArr )
+        edgeId = edgeId*2+3
+        print angArr
+        #print edgeId
+        #choose a better side
+        if edgeId < len(xArr)/2:
+            cubeSideX = xArr[edgeId:]
+            cubeSideY = yArr[edgeId:]
+        else:
+            cubeSideX = xArr[:edgeId]
+            cubeSideY = yArr[:edgeId]
+        #for cube orientation?
+        #sideCen = cubeSideX[0] + ( cubeSideX[-1] - cubeSideX[0] )/2.0, cubeSideY[0] + ( cubeSideY[-1] - cubeSideY[0] )/2.0
+        #print sideCen
+        
+        dx = ( cubeSideX[-1] - cubeSideX[0] ) *np.sqrt(2.0)/2
+        dy = ( cubeSideY[-1] - cubeSideY[0] ) *np.sqrt(2.0)/2
+        ra = np.pi/4
+        cubeCen = cubeSideX[0] + dx*np.cos(ra) - dy*np.sin(ra), cubeSideY[0] + dx*np.sin(ra) + dy*np.cos(ra)
+        #print cubeCen
+        
+    
+    if test:
+        plt.figure()
+        plt.axis('equal')
+        plt.plot( xArr, yArr, "bo" )
+        if ver == 1:
+            plt.plot( cubeSideX, cubeSideY, "ro")
+            #plt.plot( sideCen[0], sideCen[1], "y+", ms = 15)
+            plt.plot( cubeCen[0], cubeCen[1], "r+", ms = 15)
+        if center:
+            plt.plot( center[0], center[1], "r+", ms = 15 )
+        plt.show()
+    if ver == 1:
+        return cubeCen
+    return center
+
+
 def getOutlines( regions ):
     contours = []
     for item in regions:
@@ -114,6 +171,9 @@ def cubesFromScan( scan, maxDist = 2.0, minDiff = 0.1, cubeSize = 0.16, laserXY 
 
         idCub = np.argmin( cubeDist )
         myCube = cubes[idCub]
+        myCubeCenter = getCubeCenter( myCube[0], myCube[1], ver = 0, test = test )
+        
+        # Is the following code useful?
         minId = np.argmin(myCube[0])
         myCubeMin = [ myCube[0][minId], myCube[1][minId] ]
         centerId = len(myCube[0])/2 #TODO real centroid?
@@ -129,6 +189,7 @@ def cubesFromScan( scan, maxDist = 2.0, minDiff = 0.1, cubeSize = 0.16, laserXY 
         corX, corY = getCoordinates( distAr, angAr, laserXY )
         #print corX, corY
         plt.figure(figsize = (10,10))
+        plt.axis('equal')
         plt.plot(0,0, "k+", ms = 20)
         plt.plot(corX, corY, "o-") #RuntimeWarning: ... ?
         for d, a in barriers:
@@ -146,11 +207,12 @@ def cubesFromScan( scan, maxDist = 2.0, minDiff = 0.1, cubeSize = 0.16, laserXY 
             plt.plot(x, y, "go-")
         x, y = getCoordinates( myCube[0], myCube[1], laserXY )
         plt.plot(x, y, "ko-")
-        plt.plot(result[0,0], result[0,1], "yo", ms = 8)
-        plt.plot(result[1,0], result[1,1], "y+", ms = 8)
+        plt.plot( myCubeCenter[0] + laserXY[0], myCubeCenter[1] + laserXY[1], "k+", ms = 20 )
+        #plt.plot(result[0,0], result[0,1], "yo", ms = 8)
+        #plt.plot(result[1,0], result[1,1], "y+", ms = 8)
         plt.show()
     
-    return result
+    return myCubeCenter
 
 
 def checkLog( logFile, num ):
