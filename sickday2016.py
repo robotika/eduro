@@ -56,15 +56,6 @@ def gripperOpen(robot):
 def gripperClose(robot):
     gripperServo(robot.can, 43520, 32512)
 
-def rfu620CANReaderExtension(robot, id, data):
-    if id == 0x294:
-        assert len(data) == 4, len(data)
-#        if data != [0, 0, 0, 0]:
-#        print data
-    if id == 0x480:
-#        print data
-        robot.canRFID = data
-
 
 def is_path_blocked(raw_laser_data, raw_remission_data):
     # TODO asymetric filtering based on laser position
@@ -81,9 +72,11 @@ def is_path_blocked(raw_laser_data, raw_remission_data):
         print m, arr[60:-60]
     return m < 200
 
+
 def is_in_loading_zone(pose):
     x, y, a = pose
     return x < 1.0 and -0.5 < y < 0.5 # TODO setup proper boxes
+
 
 class SICKRobotDay2016:
     def __init__(self, robot, code, verbose = False):
@@ -92,9 +85,6 @@ class SICKRobotDay2016:
         self.verbose = verbose
         self.code = code
         self.robot.attachEmergencyStopButton()
-
-        self.robot.canRFID = None
-        self.robot.addExtension(rfu620CANReaderExtension)
 
         self.robot.attachCamera(sleep=0.5)
         self.robot.attachLaser( remission=True, pose=((0.24, -0.13, 0.08), (0,math.radians(180),0)) )
@@ -161,21 +151,25 @@ class SICKRobotDay2016:
         # Go straight for 2 meters
         print "ver0", self.robot.battery
 
-        prevRFID = self.robot.canRFID
+        prevRFID = None
         self.load_cube()
         for cmd in self.driver.goStraightG(2.0):
             self.robot.setSpeedPxPa(*cmd)
-            if prevRFID != self.robot.canRFID:
+
+            if prevRFID != self.robot.rfu620Data:
 #                print self.robot.rfu620Data
-                print self.robot.canRFID
-                prevRFID = self.robot.canRFID
+                prevRFID = self.robot.rfu620Data
                 posXY = combinedPose(self.robot.localisation.pose(), (-0.35, 0.14, 0))[:2]
-                if self.robot.canRFID[-1] == 51:
-                    viewlog.dumpBeacon(posXY, color=(0, 0, 255))
-                elif self.robot.canRFID[-1] == 52:
-                    viewlog.dumpBeacon(posXY, color=(255, 0, 255))
-                else:
-                    viewlog.dumpBeacon(posXY, color=(255, 255, 255))
+                for d in self.robot.rfu620Data[1]:
+                    i = d[0]  # i.e. 0x1000 0206 0000
+                    x, y, zone = (i >> 24)&0xFF, (i >> 16)&0xFF, i&0xFF
+                    print hex(i), (x, y)
+                    if x == 1:
+                        viewlog.dumpBeacon(posXY, color=(0, 0, 255))
+                    elif x == 2:
+                        viewlog.dumpBeacon(posXY, color=(255, 0, 255))
+                    else:
+                        viewlog.dumpBeacon(posXY, color=(255, 255, 255))
             self.robot.update()
         self.place_cube()
         self.game_over()
