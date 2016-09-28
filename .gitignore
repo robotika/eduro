@@ -4,3 +4,4 @@ serial/*
 *.log
 *.csv
 *.un~
+*.pyc
