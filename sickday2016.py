@@ -39,12 +39,26 @@ import starter
 from cube import detect_cubes
 import numpy as np
 
-def setupGripperModule(can): 
+def setupGripperModule(can):
     writer = WriteSDO( 0x7F, 0x2100, 1, [0xF] )  # enable servos
     for cmd in writer.generator():
         if cmd:
             can.sendData( *cmd )
         writer.update( can.readPacket() ) 
+
+def gripperDisableServos(can):
+    print "gripperDisableServos() called"
+    writer = WriteSDO( 0x7F, 0x2100, 1, [0x0] )  # disable servos
+    for cmd in writer.generator():
+        if cmd:
+            can.sendData( *cmd )
+        writer.update( can.readPacket() ) 
+    reader = ReadSDO( 0x7F, 0x2100, 1 )
+    for packet in reader.generator():
+        if packet != None:
+            can.sendData( *packet )
+        reader.update( can.readPacket() )
+    print "RESULT DATA (after):", reader.result 
 
 
 def gripperServo(can, left, right):
@@ -114,7 +128,7 @@ class SICKRobotDay2016:
         raise EmergencyStopException() # TODO: Introduce GameOverException as in Eurobot
 
 
-    def find_cube(self, timeout):
+    def find_cube0(self, timeout):
         print "find_cube"
         prev = None
         cubes = []
@@ -141,10 +155,51 @@ class SICKRobotDay2016:
                             self.robot.setSpeedPxPa(0, 0)
                             self.robot.update()
                             return True
-                        gen = self.driver.goToG(goal, finishRadius=0.1)
+                        gen = self.driver.goToG(goal, finishRadius=0.35, angularSpeed=math.radians(45), angleThreshold=math.radians(45))
                         break
+            else:
+                # no generator, and old was reached
+                print "Generator Terminated!"
+                return True  #???
+            self.robot.update()
         print "TIMEOUT"
         return False
+
+
+    def find_cube(self, timeout):
+        print "find_cube-v1"
+        prev = None
+        startTime = self.robot.time
+        while self.robot.time < startTime + timeout:
+            self.robot.update()
+            if prev != self.robot.laserData:
+                prev = self.robot.laserData
+                cubes = detect_cubes(self.robot.laserData)
+                if len(cubes) > 0:
+                    deg_angle, mm_dist = cubes[0]
+                    angle, dist = math.radians(135-deg_angle), mm_dist/1000.0
+                    pos = self.robot.laser.pose[0][0] + math.cos(angle)*dist, self.robot.laser.pose[0][1] + math.sin(angle)*dist, 0
+                    cube_x, cube_y = pos[:2]
+                    print "{:.2f}\t{:.2f}".format(cube_x, cube_y)
+                    goal = combinedPose(self.robot.localisation.pose(), pos)[:2]
+                    viewlog.dumpBeacon(goal, color=(255, 255, 0))
+                    speed = 0.0
+                    if cube_y > 0.01:
+                        angularSpeed = math.radians(10)
+                    elif cube_y < -0.01:
+                        angularSpeed = math.radians(-10)
+                    else:
+                        angularSpeed = 0
+                        speed = 0.1
+                        if cube_x < 0.30:
+                            return True
+                    self.robot.setSpeedPxPa(speed, angularSpeed)
+                else:
+                    self.robot.setSpeedPxPa(0.0, 0.0)
+
+        print "TIMEOUT"
+        return False
+
 
 
     def ver0( self, verbose=False ):
@@ -241,13 +296,14 @@ class SICKRobotDay2016:
             self.robot.localisation = SimpleOdometry()
 
             while True:
-                self.ver0(verbose = self.verbose)
+#                self.ver0(verbose = self.verbose)
 #                self.ver1(verbose = self.verbose)
 #                self.test_square(verbose = self.verbose)
-#                self.test_pick_cube(verbose = self.verbose)
+                self.test_pick_cube(verbose = self.verbose)
 
         except EmergencyStopException, e:
             print "EmergencyStopException at {} sec".format(self.robot.time - start_time)
+        gripperDisableServos(self.robot.can)
         self.robot.laser.requestStop()
         self.robot.rfu620.requestStop()
         self.robot.camera.requestStop()
