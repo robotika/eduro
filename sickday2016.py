@@ -67,7 +67,7 @@ def is_path_blocked(raw_laser_data, raw_remission_data):
     arr[arr == 0] = 10000
     arr[rem_arr < 50] = 10000
     
-    m = min(arr[60:-60])  # 45 was not good in 2016-09-20 test(6)
+    m = min(arr[135-45:135+45])
     if m < 200:
         print m, arr[60:-60]
     return m < 200
@@ -220,6 +220,8 @@ class SICKRobotDay2016:
         print "test_pick_cube", self.robot.battery
         if self.find_cube(timeout=20.0):
             self.load_cube()
+        self.driver.goStraight(0.5, timeout=10)
+        self.place_cube()
         self.game_over()
 
 
