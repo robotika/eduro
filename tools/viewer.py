@@ -22,7 +22,7 @@ class tkimg(Frame):
 
     def clear(self):
         if self.img:
-           self.img.config(image=None)
+            self.img.config(image="")
 
 
 
@@ -39,6 +39,7 @@ class RobotView:
         self.y=y
         self.a=a
         self.instances=[]
+
 
     def redraw(self, canvas):
         for i in self.instances:
@@ -108,6 +109,9 @@ class Viewer(Frame):
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
 
+        self.canvas.bind("<Button-1>", self.clickL)
+        self.canvas.bind("<Button-3>", self.clickR)
+
         # This is what enables using the mouse:
         self.canvas.bind("<ButtonPress-1>", self.move_start)
         self.canvas.bind("<B1-Motion>", self.move_move)
@@ -121,8 +125,8 @@ class Viewer(Frame):
         #windows scroll
         self.canvas.bind_all("<MouseWheel>",self.zoomer)
 
-        self.canvas.bind("<Button-1>", self.clickL)
-        self.canvas.bind("<Button-3>", self.clickR)
+    def reset(self):
+        pass
 
     def set_title(self, title):
         self.root.title( title)
