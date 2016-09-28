@@ -165,7 +165,7 @@ class Driver:
       self.robot.update()
 
 
-  def followPolyLineG( self, pts, stopDistance = 0.1, angleThreshold = math.radians(20), turnScale = 4.0, offsetSpeed = math.radians(20), offsetDistance = 0.03 ):
+  def followPolyLineG( self, pts, stopDistance = 0.1, angleThreshold = math.radians(20), turnScale = 4.0, offsetSpeed = math.radians(20), offsetDistance = 0.03, withStops=False ):
     for a,b in zip(pts[:-1],pts[1:]):
       print "--- follow (%0.2f,%0.2f) -> (%0.2f,%0.2f) ---" % ( a[0], a[1], b[0], b[1] )
       pose = self.robot.localisation.pose()
@@ -176,6 +176,9 @@ class Driver:
       line = Line(a,b)
       for cmd in self.followLineG( line, stopDistance = stopDistance, turnScale = turnScale, offsetSpeed = offsetSpeed, offsetDistance = offsetDistance ):
         yield cmd
+      if withStops:
+        for cmd in self.stopG():
+          yield cmd
     for cmd in self.stopG():
       yield cmd
 

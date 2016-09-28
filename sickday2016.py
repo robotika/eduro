@@ -89,7 +89,7 @@ def is_path_blocked(raw_laser_data, raw_remission_data):
 
 def is_in_loading_zone(pose):
     x, y, a = pose
-    return x < 1.0 and -0.5 < y < 0.5 # TODO setup proper boxes
+    return x < 1.0 and -1.5 < y < 1.5 # TODO setup proper boxes
 
 
 class SICKRobotDay2016:
@@ -231,12 +231,14 @@ class SICKRobotDay2016:
 
 
     def handle_single_cube(self, pts):
-        self.load_cube()
-        for cmd in self.driver.followPolyLineG(pts):
+        if self.find_cube(timeout=20.0):
+            self.load_cube()
+        for cmd in self.driver.followPolyLineG(pts, withStops=True):
             self.robot.setSpeedPxPa(*cmd)
             self.robot.update()
             if (not is_in_loading_zone(self.robot.localisation.pose())
                 and is_path_blocked(self.robot.laserData, self.robot.remissionData)):
+                print "ESCAPING FROM", self.robot.localisation.pose()
                 break
         self.place_cube()
 
@@ -252,15 +254,16 @@ class SICKRobotDay2016:
 
     def ver1(self, verbose=False):
         # Navigate on polyline
-        print "ver1", self.robot.battery
+        print "ver1", self.robot.battery, self.driver.maxAngularSpeed
+        self.driver.maxAngularSpeed = math.pi/2.0
 
         paths = [
             [(0, 0), (1.0, 0), (1.0, 1.0), (2.0, 1.0)],
             [(0, 0), (2.0, 0.0)],
             [(0, 0), (1.0, 0), (1.0, -1.0), (2.0, -1.0)],
         ]
-        for pts in paths:
-            self.handle_single_cube(pts)
+        for path in paths:
+            self.handle_single_cube(path)
         self.game_over()
 
 
@@ -297,9 +300,9 @@ class SICKRobotDay2016:
 
             while True:
 #                self.ver0(verbose = self.verbose)
-#                self.ver1(verbose = self.verbose)
+                self.ver1(verbose = self.verbose)
 #                self.test_square(verbose = self.verbose)
-                self.test_pick_cube(verbose = self.verbose)
+#                self.test_pick_cube(verbose = self.verbose)
 
         except EmergencyStopException, e:
             print "EmergencyStopException at {} sec".format(self.robot.time - start_time)
