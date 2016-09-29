@@ -4,17 +4,26 @@ from Tkinter import Tk
 import sys
 from logplayer import Logplayer
 from viewer import Viewer, RobotView
-from rfu_calibration import getDistanceToTag
+#from rfu_calibration import getDistanceToTag
+from math import sin, cos, radians
 
 class Sick2016(Viewer):
     def __init__(self, root, robotx=0, roboty=0, robota=0, **kwargs):
         self.robot=RobotView(front=0.15, rear=0.15, left=0.15, right=0.15, wheeldistance=0.315, wheeldiam=0.25, wheelwidth=0.05, x=robotx, y=roboty, a=robota)
+        self.llines=[]
         Viewer.__init__(self, root, **kwargs)
+        self.reset()
+
+    def reset(self):
+        self.lasers=None
+        Viewer.reset(self)
+
 
     def redraw(self):
         self.canvas.delete("all")
         self.draw_playfield()
         self.robot.draw(self)
+        self.draw_lasers()
         self.canvas.configure(scrollregion = self.canvas.bbox("all"))
 
 
@@ -31,26 +40,40 @@ class Sick2016(Viewer):
                 self.create_line([x-crosssize, y, x+crosssize, y], activefill="red",fill='black',width=2)
                 self.create_line([x, y-crosssize, x, y+crosssize], activefill="red",fill='black',width=2)
 
-class Analyzator:
-    def __init__(self, outfn):
-        self.output=open(outfn, 'w')
-        self.output.write(';'.join(("time", "x", "y", "a", "tagid", "RSSI", "computed"))+'\n')
+    def redraw_lasers(self):
+        for i in self.llines:
+            self.canvas.delete(i)
+        self.draw_lasers()
 
-    def update(self, time, pose, msgs):
+    def draw_lasers(self):
+        if self.lasers:
+            lx, ly = self.robot.transponse(0.24, -0.13)
+            la = self.robot.a
+            self.llines=[]
+            for a, dist in self.lasers:
+                self.llines.append(self.create_line([(lx, ly),(lx+cos(a+la)*dist, ly + sin(a+la)*dist) ], fill="red",width=1))
+
+    def MsgListener(self, time, pose, msgs):
         if 'RFU620LOG' in msgs and msgs['RFU620LOG']:
             _, scans  = msgs['RFU620LOG']
             for scan in scans:
-                distance = getDistanceToTag(pose, scan.id)
-                data=[time, pose[0], pose[1], pose[2], scan.id, scan.RSSI, distance ]
-                self.output.write(';'.join(data)+'\n')
+                pass
+                #distance = getDistanceToTag(pose, scan.id)
+                #data=[time, pose[0], pose[1], pose[2], scan.id, scan.RSSI, distance ]
+                #self.output.write(';'.join(data)+'\n')
+        if 'LASERLOG' in msgs:
+            #don draw old laser logs, read even the None
+            if msgs['LASERLOG']:
+                self.lasers=[(radians(a), d/1000.) for a,d in zip(range(135,-136,-1), msgs['LASERLOG'])]
+            #else:
+            #    self.lasers=None
 
 if __name__=="__main__":
     fn=None
     if len(sys.argv)>1:
         fn=sys.argv[1]
     root=Tk()
-    analyzator=Analyzator(outfn="log.csv")
-    a=Logplayer(root, fn, viewer = Sick2016, analyzator=analyzator.update)
+    a=Logplayer(root, fn, viewer = Sick2016, analyzator=None)
     a.grid()
     root.mainloop()
 

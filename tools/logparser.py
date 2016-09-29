@@ -168,7 +168,6 @@ class EduroMaxiReader:
     def __init__(self, fn):
         self.runconfig = list(getlogs(fn))
         self.run=0
-        self.correction=Position(0,0,0)
 
     def startrun(self, i, startposition=None):
         if i<0:
@@ -221,7 +220,7 @@ class EduroMaxiReader:
                     self.lastcable=self.robot.startCableIn
             else:
                 break
-        return time, transponse(self.correction, self.robot.localisation.pose()), self.received
+        return time, self.robot.localisation.pose(), self.received
 
     def __iter__(self):
         return self

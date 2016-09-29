@@ -44,6 +44,9 @@ class Logplayer(Frame):
         Frame.__init__(self, **kwargs)
         self.view=viewer(self, x=800, y=600, onLeft=self.clickL, onRight=self.clickR)
         self.createWidgets()
+        self.bind_all("<Left>", self.prev)
+        self.bind_all("<Right>", self.next)
+
         self.view.redraw()
         self.root.update()
         if not logfn:
@@ -106,7 +109,7 @@ class Logplayer(Frame):
             self.running=False
         run=self.loggenerator.run+step
         if run >= len(self.loggenerator.runconfig) or run<0:
-            timestamps, dirs, fns = zip(*sorted(listdir(self.logdir), reverse=True))
+            timestamps, dirs, fns = zip(*sorted(listdir(self.logdir)))
             index=fns.index(self.filename)+step
             if 0<=index<len(fns):
                 run = 0 if step==1 else -1
@@ -137,15 +140,18 @@ class Logplayer(Frame):
         self.posScale.set(self.position)
         self.showData(self.position)
         self.posScale.configure(to_= len(self.data)-1)
-
+        self.view.reset()
+        self.camera.clear()
 
     def showData(self,position):
         self.position=position
         self.posScale.set(position)
         time, pose, msgs = self.data[position]
+        self.view.MsgListener(time, pose, msgs)
         #if self.analyzator:
         #    self.analyzator(time, pose, msgs)
         self.view.robot.update(*pose)
+        self.view.redraw_lasers()
         self.view.robot.redraw(self.view)
         if msgs['CAMERALOG']:
             _, shot = msgs['CAMERALOG']
@@ -190,6 +196,15 @@ class Logplayer(Frame):
         else:
             self.running=False
 
+    def next(self, event):
+        pos=self.position+1
+        if pos<len(self.data):
+            self.posScale.set(pos)
+
+    def prev(self, event):
+        pos=self.position-1
+        if pos>=0:
+            self.posScale.set(pos)
 
     def pos_callback(self, pos, *args):
         if not self.running:
