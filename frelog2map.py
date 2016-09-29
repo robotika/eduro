@@ -15,7 +15,7 @@ from eduromaxi import EduroMaxi
 from can import CAN, ReplyLogInputsOnly, LogEnd
 from localisation import SimpleOdometry, KalmanFilter
 
-cfgDrawPosition = False
+cfgDrawPosition = True
 WEED_LIMIT = 1400
 
 UNKNOWN = (0xbe, 0xbe, 0xbe) # Unknown/unexplored area: GRAY
@@ -24,7 +24,7 @@ FREE = 0xffffff   # Free known area/explored area: WHITE
 MARKED = 0xff0000 # Marked plants/detection target: RED
 
 scale = 100.0  # i.e. 1 pixel = 1cm
-imsize = (1500,2000)
+imsize = (3000,4000)
 offsetX, offsetY = imsize[0]/2, imsize[1]/2+300
 
 def replace( arr, val, newVal ):
@@ -92,8 +92,8 @@ def createMap( robot ):
                 prevCamera = robot.cameraData
     except LogEnd:
         pass
-    for w in weeds:
-        cv2.circle( img, w, 10, (0,0,255), -1 )
+    #for w in weeds:
+    #    cv2.circle( img, w, 10, (0,0,255), -1 )
     return img
     
 
