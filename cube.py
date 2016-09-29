@@ -1,60 +1,15 @@
 #!/usr/bin/python
 """
-  Cube detector with Velodyne VLP-16
+  Cube detector with small horizontally placed SICK laser rangefinder
   (planned for SICK Robot Day 2016)
   usage:
        ./cube.py <task|thread> [<metalog> [<F>]]
 """
-# requires source from osgar & apyros
-
 import sys
-import os
-import inspect
-OSGAR_ROOT = os.path.realpath(os.path.abspath(os.path.join(
-    os.path.split(inspect.getfile(inspect.currentframe() ))[0], '..', 'osgar')))
-if OSGAR_ROOT not in sys.path:
-    assert 'eduro' in sys.path[0], sys.path
-    sys.path.insert(1, OSGAR_ROOT) # access without installation
-#    sys.path.append(OSGAR_ROOT)  # collision of can.py and other files
-# TODO fix velodyne logging and provide apyros+sensors Python package
-
-from velodyne import Velodyne, LASER_ANGLES
-from apyros.metalog import MetaLog, disableAsserts
-
 import numpy as np
 import math
 
-
-def load_background():
-#    return np.zeros((360, 16), dtype=np.uint16)  # default = no action
-#    return np.full((360, 16), 1000, dtype=np.uint16)  # just for subtraction test
-    return np.loadtxt('cube-background.txt', dtype=np.uint16)
-
-
-def save_background(arr, filename):
-    f = open(filename, 'w')
-    for i in xrange(360):
-        for j in xrange(16):
-            f.write('{} '.format(arr[i][j]))
-        f.write('\n')
-    f.close()
-
-
-def remove_background(scan, ground):
-    mask = scan >= background
-    ret = scan.copy()
-    ret[mask] = 0
-    return ret
-
-
-def print_data(scan):
-    print [x for a,x in sorted(zip(LASER_ANGLES, scan[0]))]
-    print
-
-
-##################### small SICK laser scanner #####################
-
-def detect_cubes(raw_laser_data, verbose=False):
+def detect_cubes_v0(raw_laser_data, verbose=False):
     arr = np.array(raw_laser_data)
     mask = arr < 10  # 1cm "blindnesss"
     arr[mask] = 10000
@@ -76,6 +31,25 @@ def detect_cubes(raw_laser_data, verbose=False):
         if 0.1 < cube_size < 0.25:
             return [(center_index, arr[center_index])]
     return []
+
+
+class CubeDetector:
+
+    def __init__(self, laser_pose_6D):
+        self.laser_x = laser_pose_6D[0][0]
+        self.laser_y = laser_pose_6D[0][1]
+    
+    def detect_cubes_xy(self, raw_laser_data, verbose=False):
+        """return list of cubes coordinates relative to robot position"""
+        ret = []
+        for deg_angle, mm_dist in detect_cubes_v0(raw_laser_data, verbose=verbose):
+             angle, dist = math.radians(135-deg_angle), mm_dist/1000.0
+             cube_x, cube_y = self.laser_x + math.cos(angle)*dist, self.laser_y + math.sin(angle)*dist
+             ret.append((cube_x, cube_y))
+             if verbose:
+                 print "{:.2f}\t{:.2f}".format(cube_x, cube_y)
+        return ret
+
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:

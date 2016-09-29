@@ -1,11 +1,12 @@
 #!/usr/bin/python
 
 import unittest
-from cube import detect_cubes
+from cube import CubeDetector
 
 class CubeTest(unittest.TestCase):
 
     def test_detection( self ):
+        cd = CubeDetector(laser_pose_6D = ((0,0,0), (0,0,0)))
         # two cubes, 2016-09-13-apu2\czuB\src_laser_160913_191514.log 
         data = [6766, 6771, 6779, 6780, 6782, 6788, 6799, 6794, 6790, 6804, 6809, 6815, 6823,
         6837, 6852, 6855, 6853, 6856, 6851, 6849, 6846, 6833, 6835, 6838, 6831,
@@ -31,7 +32,7 @@ class CubeTest(unittest.TestCase):
         0, 8803, 8795, 8841, 8902, 8889, 0, 9770, 9703, 9668, 9742, 9755, 9811,
         9867, 9932] 
         self.assertEqual(len(data), 271)
-        cubes = detect_cubes(data)
+        cubes = cd.detect_cubes_xy(data)
         self.assertEqual(cubes, [])
 
         # 2016-09-13-apu2\czuB\src_laser_160913_191555.log 
@@ -58,8 +59,8 @@ class CubeTest(unittest.TestCase):
         747, 751, 815, 823, 842, 856, 875, 916, 947, 1040, 0, 647, 0, 1687,
         1687, 1691, 1689, 1691]
 
-        cubes = detect_cubes(data)
-        self.assertEqual(cubes, [(91, 565),])  # cube angle center
+        cubes = cd.detect_cubes_xy(data)
+        self.assertEqual(cubes, [(0.40642698719133791, 0.39248197930933343)])  # corresponds to angle center (91, 565)
 
 if __name__ == "__main__":
   unittest.main()

@@ -36,7 +36,7 @@ from sdoplg import ReadSDO, WriteSDO
 
 import starter
 
-from cube import detect_cubes
+from cube import CubeDetector
 import numpy as np
 
 def setupGripperModule(can):
@@ -128,60 +128,20 @@ class SICKRobotDay2016:
         raise EmergencyStopException() # TODO: Introduce GameOverException as in Eurobot
 
 
-    def find_cube0(self, timeout):
-        print "find_cube"
-        prev = None
-        cubes = []
-        goal = None
-        gen = self.driver.goStraightG(1.0)
-        startTime = self.robot.time
-        while self.robot.time < startTime + timeout:
-            for cmd in gen:
-                self.robot.setSpeedPxPa(*cmd)
-                self.robot.update()
-                if prev != self.robot.laserData:
-                    prev = self.robot.laserData
-                    cubes = detect_cubes(self.robot.laserData)
-                    if len(cubes) > 0:
-                        deg_angle, mm_dist = cubes[0]
-                        angle, dist = math.radians(135-deg_angle), mm_dist/1000.0
-                        pos = self.robot.laser.pose[0][0] + math.cos(angle)*dist, self.robot.laser.pose[0][1] + math.sin(angle)*dist, 0
-                        cube_x, cube_y = pos[:2]
-                        print "{:.2f}\t{:.2f}".format(cube_x, cube_y)
-                        goal = combinedPose(self.robot.localisation.pose(), pos)[:2]
-                        viewlog.dumpBeacon(goal, color=(255, 255, 0)) 
-                        if 0.0 < cube_x < 0.4 and -0.1 < cube_y < 0.1:
-                            print cube_x, cube_y
-                            self.robot.setSpeedPxPa(0, 0)
-                            self.robot.update()
-                            return True
-                        gen = self.driver.goToG(goal, finishRadius=0.35, angularSpeed=math.radians(45), angleThreshold=math.radians(45))
-                        break
-            else:
-                # no generator, and old was reached
-                print "Generator Terminated!"
-                return True  #???
-            self.robot.update()
-        print "TIMEOUT"
-        return False
-
-
     def find_cube(self, timeout):
         print "find_cube-v1"
         prev = None
+        cd = CubeDetector(self.robot.laser.pose)
         startTime = self.robot.time
         while self.robot.time < startTime + timeout:
             self.robot.update()
             if prev != self.robot.laserData:
                 prev = self.robot.laserData
-                cubes = detect_cubes(self.robot.laserData)
+                cubes = cd.detect_cubes_xy(self.robot.laserData)
                 if len(cubes) > 0:
-                    deg_angle, mm_dist = cubes[0]
-                    angle, dist = math.radians(135-deg_angle), mm_dist/1000.0
-                    pos = self.robot.laser.pose[0][0] + math.cos(angle)*dist, self.robot.laser.pose[0][1] + math.sin(angle)*dist, 0
-                    cube_x, cube_y = pos[:2]
+                    cube_x, cube_y = cubes[0]
                     print "{:.2f}\t{:.2f}".format(cube_x, cube_y)
-                    goal = combinedPose(self.robot.localisation.pose(), pos)[:2]
+                    goal = combinedPose(self.robot.localisation.pose(), (cube_x, cube_y, 0))[:2]
                     viewlog.dumpBeacon(goal, color=(255, 255, 0))
                     speed = 0.0
                     if cube_y > 0.01:
