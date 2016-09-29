@@ -3,7 +3,7 @@
   Cube detector with small horizontally placed SICK laser rangefinder
   (planned for SICK Robot Day 2016)
   usage:
-       ./cube.py <task|thread> [<metalog> [<F>]]
+       ./cube.py <src_laser file>
 """
 import sys
 import numpy as np
@@ -55,39 +55,17 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print __doc__
         sys.exit(2)
-    metalog=None
-    if 'meta_' in sys.argv[1]:
-        metalog = MetaLog(filename=sys.argv[1])
-    elif len(sys.argv) > 2:
-        metalog = MetaLog(filename=sys.argv[2])
-    if len(sys.argv) > 2 and sys.argv[-1] == 'F':
-        disableAsserts()
 
-    sensor = Velodyne(metalog=metalog)
-    if sys.argv[1] == 'thread':
-        thr = VelodyneThread(sensor)
-        start_time = datetime.now()
-        thr.start()
-        prev = None
-        while datetime.now() - start_time < timedelta(seconds=3.0):
-            curr = thr.scan_safe_dist()
-            if prev != curr:
-                print curr
-            prev = curr
-        thr.requestStop()
-        thr.join()
-    else:
-        background = load_background()
-        prev = None
-        for i in xrange(10000):
-            sensor.update()
-            curr = sensor.scan_index, sensor.dist_index
-            if prev != curr:
-                data = remove_background(sensor.dist, background)
-                print_data(data)
-#                if sensor.scan_index % 10 == 0:
-#                    print curr
-            prev = curr
+    cd = CubeDetector(((0.24, -0.13, 0.08), (0,math.radians(180),0)))
+    for i, line in enumerate(open(sys.argv[1]), start=1):
+        if '[' in line:
+            laser_data = eval(line)
+            cubes = cd.detect_cubes_xy(laser_data)
+            if len(cubes) == 0:
+                print i
+                cd.detect_cubes_xy(laser_data, verbose=True)
+
+
 
 # vim: expandtab sw=4 ts=4 
 
