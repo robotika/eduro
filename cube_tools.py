@@ -8,7 +8,7 @@
 import sys
 import cv2
 import numpy as np
-import matplotlib.pyplot as plt
+
 
 color = "r" # "y"
 
@@ -55,6 +55,7 @@ def getCubeCenter( dist, ang, ver = 0, test = False ):
         
     
     if test:
+        import matplotlib.pyplot as plt
         plt.figure()
         plt.axis('equal')
         plt.plot( xArr, yArr, "bo" )
@@ -173,17 +174,9 @@ def cubesFromScan( scan, maxDist = 2.0, minDiff = 0.1, cubeSize = 0.16, laserXY 
         myCube = cubes[idCub]
         myCubeCenter = getCubeCenter( myCube[0], myCube[1], ver = 0, test = test )
         
-        # Is the following code useful?
-        minId = np.argmin(myCube[0])
-        myCubeMin = [ myCube[0][minId], myCube[1][minId] ]
-        centerId = len(myCube[0])/2 #TODO real centroid?
-        myCubeCentr = [ myCube[0][centerId], myCube[1][centerId] ]
-        
-        result = np.zeros( [2,2] )
-        result[0,:] = getCoordinates( myCubeMin[0], myCubeMin[1], laserXY )
-        result[1,:] = getCoordinates( myCubeCentr[0], myCubeCentr[1], laserXY )
         
     if test:
+        import matplotlib.pyplot as plt
         #print distAr, angAr, diffAr
         #print barriers
         corX, corY = getCoordinates( distAr, angAr, laserXY )
