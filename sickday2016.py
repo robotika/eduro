@@ -161,12 +161,13 @@ class SICKRobotDay2016:
             self.robot.update()
             if prev != self.robot.laserData:
                 prev = self.robot.laserData
-                cubes = cd.detect_cubes_xy(self.robot.laserData)
+                cubes = cd.detect_cubes_xy(self.robot.laserData, limit=4)
                 if len(cubes) > 0:
+                    for i, (cube_x, cube_y) in enumerate(cubes):
+                        goal = combinedPose(self.robot.localisation.pose(), (cube_x, cube_y, 0))[:2]
+                        viewlog.dumpBeacon(goal, color=(200, 200, 0) if i > 0 else (255, 255, 0))
                     cube_x, cube_y = cubes[0]
                     print "{:.2f}\t{:.2f}".format(cube_x, cube_y)
-                    goal = combinedPose(self.robot.localisation.pose(), (cube_x, cube_y, 0))[:2]
-                    viewlog.dumpBeacon(goal, color=(255, 255, 0))
                     speed = 0.0
                     if cube_y > 0.01:
                         angularSpeed = math.radians(10)

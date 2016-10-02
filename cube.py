@@ -29,10 +29,9 @@ def detect_cubes_v0(raw_laser_data, verbose=False):
             print arr[left_index:right_index+1]
             print "CUBE SIZE", cube_size
         if 0.1 < cube_size < 0.25:
-            return [(center_index, arr[center_index])]
+            yield (center_index, arr[center_index])
         arr[left_index + 1:right_index] = 10000
         index = np.argmin(arr[blind_offset:]) + blind_offset
-    return []
 
 
 class CubeDetector:
@@ -42,7 +41,7 @@ class CubeDetector:
         self.laser_y = laser_pose_6D[0][1]
         self.verbose = verbose
     
-    def detect_cubes_xy(self, raw_laser_data):
+    def detect_cubes_xy(self, raw_laser_data, limit=3):
         """return list of cubes coordinates relative to robot position"""
         ret = []
         for deg_angle, mm_dist in detect_cubes_v0(raw_laser_data, verbose=self.verbose):
@@ -51,6 +50,8 @@ class CubeDetector:
              ret.append((cube_x, cube_y))
              if self.verbose:
                  print "{:.2f}\t{:.2f}".format(cube_x, cube_y)
+             if len(ret) >= limit:
+                 break
         return ret
 
 
