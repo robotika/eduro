@@ -70,6 +70,28 @@ def gripperOpen(robot):
 def gripperClose(robot):
     gripperServo(robot.can, 43520, 32512)
 
+#----------------------------------------------------
+
+def draw_rfu620_extension(robot, id, data):
+    if id=='rfu620':
+        print data
+        posXY = combinedPose(robot.localisation.pose(), (-0.35, 0.14, 0))[:2]
+        for d in data[1]:
+            i, rssi = d[:2]  # i.e. 0x1000 0206 0000
+            x, y, zone = (i >> 24)&0xFF, (i >> 16)&0xFF, i&0xFF
+            print hex(i), (x, y)
+            if (x + y) % 2 == 0:
+                if rssi > -60:
+                    viewlog.dumpBeacon(posXY, color=(0, 0, 255))
+                else:
+                    viewlog.dumpBeacon(posXY, color=(0, 0, 128))
+            else:
+                if rssi > -60:
+                    viewlog.dumpBeacon(posXY, color=(255, 0, 255))
+                else:
+                    viewlog.dumpBeacon(posXY, color=(128, 0, 128))
+
+#----------------------------------------------------
 
 def is_path_blocked(raw_laser_data, raw_remission_data):
     # TODO asymetric filtering based on laser position
@@ -106,7 +128,9 @@ class SICKRobotDay2016:
         
         self.driver = Driver( self.robot, maxSpeed = 0.5, maxAngularSpeed = math.radians(180) )
         self.robot.localisation = SimpleOdometry()
-        
+
+        self.robot.addExtension(draw_rfu620_extension)
+
         self.robot.laser.stopOnExit = False    # for faster boot-up
 
 
