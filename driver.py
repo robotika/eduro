@@ -150,10 +150,11 @@ class Driver:
       signedDistance = line.signedDistance( self.robot.localisation.pose() ) + self.centerOffset
 #      print "deg %.1f" %( math.degrees(diff),), "dist=%0.3f" % (signedDistance,)
       if math.fabs( signedDistance ) > offsetDistance:
+        step = max(0.0, min(offsetSpeed, offsetSpeed * (abs(signedDistance)-offsetDistance)/offsetDistance ))
         if signedDistance < 0:
-          diff += offsetSpeed
+          diff += step
         else:
-          diff -= offsetSpeed
+          diff -= step
       turn = self.restrictedTurn(turnScale * diff)
       speed = self.restrictedSpeed(turn)
       yield  speed, turn
