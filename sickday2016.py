@@ -169,13 +169,25 @@ class SICKRobotDay2016:
                     cube_x, cube_y = cubes[0]
                     print "{:.2f}\t{:.2f}".format(cube_x, cube_y)
                     speed = 0.0
-                    if cube_y > 0.01:
-                        angularSpeed = math.radians(10)
-                    elif cube_y < -0.01:
-                        angularSpeed = math.radians(-10)
+
+                    tolerance = 0.01
+                    if cube_x > 0.5:
+                        tolerance = 0.05
+
+                    angle = math.atan2(cube_y, cube_x)
+                    turnStep = math.radians(10)
+                    if abs(angle) > math.radians(10):
+                        turnStep = math.radians(50)
+
+                    if cube_y > tolerance:
+                        angularSpeed = turnStep
+                    elif cube_y < -tolerance:
+                        angularSpeed = -turnStep
                     else:
                         angularSpeed = 0
                         speed = 0.1
+                        if cube_x > 0.5:
+                            speed = 0.3  # move faster toward further goals
                         if cube_x < 0.30:
                             return True
                     self.robot.setSpeedPxPa(speed, angularSpeed)
