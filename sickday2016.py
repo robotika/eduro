@@ -111,7 +111,8 @@ def is_path_blocked(raw_laser_data, raw_remission_data):
 
 def is_in_loading_zone(pose):
     x, y, a = pose
-    return x < 1.0 and -1.5 < y < 1.5 # TODO setup proper boxes
+#    return x < 1.0 and -1.5 < y < 1.5 # TODO setup proper boxes
+    return x < 1.5 and 0.5 < y < 1.5 # TODO setup proper boxes
 
 
 class SICKRobotDay2016:
@@ -259,11 +260,18 @@ class SICKRobotDay2016:
         print "ver1", self.robot.battery, self.driver.maxAngularSpeed
         self.driver.maxAngularSpeed = math.pi/2.0
 
-        paths = [
+        paths0 = [
             [(0, 0), (1.0, 0), (1.0, 1.0), (2.0, 1.0)],
             [(0, 0), (2.0, 0.0)],
             [(0, 0), (1.0, 0), (1.0, -1.0), (2.0, -1.0)],
         ]
+        paths = [
+            [(1.0, 0), (2.0, 0), (2.0, 1.0), (3.0, 1.0)],
+            [(1.0, 0), (2.0, 0), (3.0, 0)],
+            [(1.0, 0), (2.0, 0), (2.0, -1.0), (3.0, -1.0)],
+            [(1.0, 0), (2.0, 0)],
+        ]
+        self.robot.localisation.setPose( (0.0, 0.7, 0.0) )
         for path in paths:
             self.handle_single_cube(path)
         self.game_over()
