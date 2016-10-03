@@ -29,7 +29,7 @@ from viewlog import viewLogExtension, viewCompassExtension, viewPoseExtension
 
 from ray_trace import combinedPose
 from line import distance, Line
-from route import loadLatLonPts, Convertor
+from route import Route, DummyConvertor
 
 from sdoplg import ReadSDO, WriteSDO
 
@@ -239,7 +239,12 @@ class SICKRobotDay2016:
                 break
         self.place_cube()
 
-        # TODO handle offset in case of blocked path
+        # handle offset in case of blocked path
+        print pts
+        route = Route(pts=pts, conv=DummyConvertor())
+        _, dist, signed_index = route.findNearestEx(self.robot.localisation.pose())
+        pts = pts[:abs(signed_index) + 1]
+        print "cut path", dist, signed_index, pts
 
         self.driver.turn(angle=math.radians(180), timeout=30)
 
