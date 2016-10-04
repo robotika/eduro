@@ -93,20 +93,24 @@ def draw_rfu620_extension(robot, id, data):
 
 #----------------------------------------------------
 
-def is_path_blocked(raw_laser_data, raw_remission_data):
+def is_path_blocked(raw_laser_data, raw_remission_data=None):
     # TODO asymetric filtering based on laser position
     # TODO use reference array for safety area
     # TODO move to separate file??
     arr = np.array(raw_laser_data, dtype=np.uint16)
-    rem_arr = np.array(raw_remission_data[:-3], dtype=np.uint16)  # what are the 3 extra values 0, 1, 11?!
-    assert len(arr) == len(rem_arr), (len(arr), len(rem_arr))
     arr[arr == 0] = 10000
-    arr[rem_arr < 50] = 10000
+    if raw_remission_data is not None:
+        rem_arr = np.array(raw_remission_data[:-3], dtype=np.uint16)  # what are the 3 extra values 0, 1, 11?!
+        assert len(arr) == len(rem_arr), (len(arr), len(rem_arr))
+        arr[rem_arr < 50] = 10000
     
     m = min(arr[135-45:135+45])
     if m < 200:
-        print m, arr[60:-60]
-    return m < 200
+        count = sum(arr[135-45:135+45] < 200)
+        print m, arr[60:-60], "count =", count
+        return count >= 10
+    else:
+        return False
 
 
 def is_in_loading_zone(pose):
