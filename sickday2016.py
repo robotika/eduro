@@ -94,6 +94,8 @@ def draw_rfu620_extension(robot, id, data):
 #----------------------------------------------------
 
 def is_path_blocked(raw_laser_data, raw_remission_data=None):
+    return False
+
     # TODO asymetric filtering based on laser position
     # TODO use reference array for safety area
     # TODO move to separate file??
@@ -232,7 +234,7 @@ class SICKRobotDay2016:
         self.game_over()
 
 
-    def handle_single_cube(self, pts):
+    def handle_single_cube(self, pts, rev_pts):
         if self.find_cube(timeout=20.0):
             self.load_cube()
         for cmd in self.driver.followPolyLineG(pts, withStops=True):
@@ -245,16 +247,16 @@ class SICKRobotDay2016:
         self.place_cube()
 
         # handle offset in case of blocked path
-        print pts
-        route = Route(pts=pts, conv=DummyConvertor())
-        _, dist, signed_index = route.findNearestEx(self.robot.localisation.pose())
-        pts = pts[:abs(signed_index) + 1]
-        print "cut path", dist, signed_index, pts
+#        print pts
+#        route = Route(pts=pts, conv=DummyConvertor())
+#        _, dist, signed_index = route.findNearestEx(self.robot.localisation.pose())
+#        pts = pts[:abs(signed_index) + 1]
+#        print "cut path", dist, signed_index, pts
 
         self.driver.turn(angle=math.radians(180), timeout=30)
 
-        pts.reverse()  # return path home
-        for cmd in self.driver.followPolyLineG(pts):
+#        pts.reverse()  # return path home
+        for cmd in self.driver.followPolyLineG(rev_pts):
             self.robot.setSpeedPxPa(*cmd)
             self.robot.update()
 
@@ -269,15 +271,33 @@ class SICKRobotDay2016:
             [(0, 0), (2.0, 0.0)],
             [(0, 0), (1.0, 0), (1.0, -1.0), (2.0, -1.0)],
         ]
-        paths = [
+        paths1 = [
             [(1.0, 0), (2.0, 0), (2.0, 1.0), (3.0, 1.0)],
             [(1.0, 0), (2.0, 0), (3.0, 0)],
             [(1.0, 0), (2.0, 0), (2.0, -1.0), (3.0, -1.0)],
             [(1.0, 0), (2.0, 0)],
         ]
-        self.robot.localisation.setPose( (0.0, 0.7, 0.0) )
-        for path in paths:
-            self.handle_single_cube(path)
+        paths = [
+            ( [(1.5, 2.5), (1.5, 1.5), (6.5, 1.5)], [(6.5, 1.5), (3.5, 1.5)] ),
+            ( [(3.5, 2.5), (5.5, 2.5)], [(5.5, 2.5), (3.5, 2.5)] ),
+            ( [(3.5, 3.5), (6.5, 3.5)], [(6.5, 3.5), (3.5, 3.5)] ),
+            ( [(3.5, 4.5), (5.5, 4.5)], [(5.5, 4.5), (3.5, 4.5)] ),
+            ( [(3.5, 5.5), (6.5, 5.5)], [(6.5, 5.5), (3.5, 5.5)] ),
+
+            ( [(3.5, 1.5), (5.5, 1.5)], [(5.5, 1.5), (3.5, 1.5)] ),
+            ( [(3.5, 2.5), (4.5, 2.5)], [(4.5, 2.5), (3.5, 2.5)] ),
+            ( [(3.5, 3.5), (5.5, 3.5)], [(5.5, 3.5), (3.5, 3.5)] ),
+            ( [(3.5, 4.5), (4.5, 4.5)], [(4.5, 4.5), (3.5, 4.5)] ),
+            ( [(3.5, 5.5), (5.5, 5.5)], [(5.5, 5.5), (3.5, 5.5)] ),
+
+            ( [(3.5, 1.5), (4.5, 1.5)], [(4.5, 1.5), (3.5, 1.5)] ),
+            ( [(3.5, 3.5), (4.5, 3.5)], [(4.5, 3.5), (3.5, 3.5)] ),
+            ( [(3.5, 5.5), (4.5, 5.5)], [(4.5, 5.5), (3.5, 5.5)] ),
+        ]
+#        self.robot.localisation.setPose( (0.0, 0.7, 0.0) )
+        self.robot.localisation.setPose( (1.5, 2.2, 0.0) )
+        for path, rev_path in paths:
+            self.handle_single_cube(path, rev_path)
         self.game_over()
 
 
