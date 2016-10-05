@@ -299,6 +299,11 @@ class SICKRobotDay2016:
         self.game_over()
 
 
+    def test_line( self, verbose=False ):
+        print "test_line", self.robot.battery
+        self.driver.goStraight(10.0, timeout=60)
+        self.game_over()
+
     def test_square( self, verbose=False ):
         print "test_square", self.robot.battery
         while True:
@@ -333,8 +338,7 @@ class SICKRobotDay2016:
             while True:
 #                self.ver0(verbose = self.verbose)
                 self.ver1(verbose = self.verbose)
-#                self.test_square(verbose = self.verbose)
-#                self.test_pick_cube(verbose = self.verbose)
+#                self.test_line(verbose = self.verbose)
 
         except EmergencyStopException, e:
             print "EmergencyStopException at {} sec".format(self.robot.time - start_time)
