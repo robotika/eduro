@@ -6,7 +6,11 @@
            
 """
 import sys
-import cv2
+try:
+    import cv2
+except ImportError:
+    pass
+    
 import numpy as np
 
 
@@ -130,7 +134,8 @@ def getCoordinates(dist, ang, laserXY = None):
     return X, Y
     
 
-def cubesFromScan( scan, maxDist = 2.0, minDiff = 0.1, cubeSize = 0.16, laserXY = [0.27, -0.13] , test = False ):
+def cubesFromScan( scan, maxDist = 2.0, minDiff = 0.1, cubeSize = 0.16, laserXY = [0, 0] , test = False ):
+    myCubeCenter = []
     distAr = np.array(scan[40:])/1000.0 # 0:40 -> only robot, no cube TODO
     angAr = np.arange( -135, 136.0 )
     angAr = angAr[40:]
@@ -164,7 +169,6 @@ def cubesFromScan( scan, maxDist = 2.0, minDiff = 0.1, cubeSize = 0.16, laserXY 
         if pointDist > 0.8 * cubeSize and pointDist < 1.5 * cubeSize:
             cubes.append( [bar, ang] )
             
-    result = None
     if cubes:
         cubeDist = []
         for cub in cubes:
@@ -172,7 +176,7 @@ def cubesFromScan( scan, maxDist = 2.0, minDiff = 0.1, cubeSize = 0.16, laserXY 
 
         idCub = np.argmin( cubeDist )
         myCube = cubes[idCub]
-        myCubeCenter = getCubeCenter( myCube[0], myCube[1], ver = 0, test = test )
+        myCubeCenter.append( getCubeCenter( myCube[0], myCube[1], ver = 0, test = test ) )
         
         
     if test:
@@ -201,8 +205,6 @@ def cubesFromScan( scan, maxDist = 2.0, minDiff = 0.1, cubeSize = 0.16, laserXY 
         x, y = getCoordinates( myCube[0], myCube[1], laserXY )
         plt.plot(x, y, "ko-")
         plt.plot( myCubeCenter[0] + laserXY[0], myCubeCenter[1] + laserXY[1], "k+", ms = 20 )
-        #plt.plot(result[0,0], result[0,1], "yo", ms = 8)
-        #plt.plot(result[1,0], result[1,1], "y+", ms = 8)
         plt.show()
     
     return myCubeCenter
@@ -235,3 +237,4 @@ if __name__ == "__main__":
         logFile = sys.argv[2]
         scanNum = int(sys.argv[3])
         checkLog( logFile, scanNum )
+
