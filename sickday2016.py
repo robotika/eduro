@@ -74,7 +74,6 @@ def gripperClose(robot):
 
 def draw_rfu620_extension(robot, id, data):
     if id=='rfu620':
-        print data
         posXY = combinedPose(robot.localisation.pose(), (-0.35, 0.14, 0))[:2]
         for d in data[1]:
             i, rssi = d[:2]  # i.e. 0x1000 0206 0000
@@ -213,7 +212,6 @@ class SICKRobotDay2016:
             self.robot.setSpeedPxPa(*cmd)
 
             if prevRFID != self.robot.rfu620Data:
-#                print self.robot.rfu620Data
                 prevRFID = self.robot.rfu620Data
                 posXY = combinedPose(self.robot.localisation.pose(), (-0.35, 0.14, 0))[:2]
                 for d in self.robot.rfu620Data[1]:
@@ -244,15 +242,14 @@ class SICKRobotDay2016:
         self.place_cube()
 
         # handle offset in case of blocked path
-#        print pts
-#        route = Route(pts=pts, conv=DummyConvertor())
-#        _, dist, signed_index = route.findNearestEx(self.robot.localisation.pose())
-#        pts = pts[:abs(signed_index) + 1]
-#        print "cut path", dist, signed_index, pts
+        print rev_pts
+        route = Route(pts=rev_pts, conv=DummyConvertor())
+        _, dist, signed_index = route.findNearestEx(self.robot.localisation.pose())
+        rev_pts = rev_pts[max(0, abs(signed_index) - 1):]
+        print "cut path", dist, signed_index, rev_pts
 
         self.driver.turn(angle=math.radians(180), timeout=30)
 
-#        pts.reverse()  # return path home
         for cmd in self.driver.followPolyLineG(rev_pts):
             self.robot.setSpeedPxPa(*cmd)
             self.robot.update()
@@ -263,17 +260,6 @@ class SICKRobotDay2016:
         print "ver1", self.robot.battery, self.driver.maxAngularSpeed
         self.driver.maxAngularSpeed = math.pi/2.0
 
-        paths0 = [
-            [(0, 0), (1.0, 0), (1.0, 1.0), (2.0, 1.0)],
-            [(0, 0), (2.0, 0.0)],
-            [(0, 0), (1.0, 0), (1.0, -1.0), (2.0, -1.0)],
-        ]
-        paths1 = [
-            [(1.0, 0), (2.0, 0), (2.0, 1.0), (3.0, 1.0)],
-            [(1.0, 0), (2.0, 0), (3.0, 0)],
-            [(1.0, 0), (2.0, 0), (2.0, -1.0), (3.0, -1.0)],
-            [(1.0, 0), (2.0, 0)],
-        ]
         paths = [
             ( [(1.5, 2.5), (1.5, 1.5), (6.5, 1.5)], [(6.5, 1.5), (3.5, 1.5)] ),
             ( [(3.5, 2.5), (5.5, 2.5)], [(5.5, 2.5), (3.5, 2.5)] ),
@@ -291,7 +277,6 @@ class SICKRobotDay2016:
             ( [(3.5, 3.5), (4.5, 3.5)], [(4.5, 3.5), (3.5, 3.5)] ),
             ( [(3.5, 5.5), (4.5, 5.5)], [(4.5, 5.5), (3.5, 5.5)] ),
         ]
-#        self.robot.localisation.setPose( (0.0, 0.7, 0.0) )
         self.robot.localisation.setPose( (1.5, 2.2, 0.0) )
         for path, rev_path in paths:
             self.handle_single_cube(path, rev_path)
