@@ -92,6 +92,16 @@ def draw_rfu620_extension(robot, id, data):
 
 #----------------------------------------------------
 
+def draw_cubes_extension(robot, id, data):
+    if id == 'laser':
+        cd = CubeDetector(robot.laser.pose)
+        cubes = cd.detect_cubes_xy(data, limit=4)
+        for cube_x, cube_y in cubes:
+            goal = combinedPose(robot.localisation.pose(), (cube_x, cube_y, 0))[:2]
+            viewlog.dumpBeacon(goal, color=(128, 255, 128))
+
+#----------------------------------------------------
+
 def is_path_blocked(raw_laser_data, raw_remission_data=None):
     # TODO asymetric filtering based on laser position
     # TODO use reference array for safety area
@@ -133,6 +143,7 @@ class SICKRobotDay2016:
         self.robot.localisation = SimpleOdometry()
 
         self.robot.addExtension(draw_rfu620_extension)
+        self.robot.addExtension(draw_cubes_extension)
 
         self.robot.laser.stopOnExit = False    # for faster boot-up
 
