@@ -143,7 +143,10 @@ class SICKRobotDay2016:
         gripperClose(self.robot)
 
     def place_cube(self):
-        print "place cube"
+        pos = combinedPose(self.robot.localisation.pose(), (0.2, 0, 0))[:2]  # TODO check proper offset
+        print "place cube at ({:.2f}, {:.2f})".format(*pos)
+        viewlog.dumpBeacon(pos, color=(255, 255, 255))
+        viewlog.dumpObstacles([[pos]])
         gripperOpen(self.robot)
         self.driver.goStraight(-0.3, timeout=30)
 
