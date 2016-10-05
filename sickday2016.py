@@ -94,8 +94,6 @@ def draw_rfu620_extension(robot, id, data):
 #----------------------------------------------------
 
 def is_path_blocked(raw_laser_data, raw_remission_data=None):
-    return False
-
     # TODO asymetric filtering based on laser position
     # TODO use reference array for safety area
     # TODO move to separate file??
@@ -117,8 +115,7 @@ def is_path_blocked(raw_laser_data, raw_remission_data=None):
 
 def is_in_loading_zone(pose):
     x, y, a = pose
-#    return x < 1.0 and -1.5 < y < 1.5 # TODO setup proper boxes
-    return x < 1.5 and 0.5 < y < 1.5 # TODO setup proper boxes
+    return x < 3.5 and 1.5 < y < 5.5 # TODO use RFID for extra check
 
 
 class SICKRobotDay2016:
