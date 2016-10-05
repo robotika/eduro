@@ -184,6 +184,7 @@ class SICKRobotDay2016:
                         goal = combinedPose(self.robot.localisation.pose(), (cube_x, cube_y, 0))[:2]
                         viewlog.dumpBeacon(goal, color=(200, 200, 0) if i > 0 else (255, 255, 0))
                     cube_x, cube_y = cubes[0]
+                    cube_y += 0.05  # hack for bended(?) laser
                     print "{:.2f}\t{:.2f}".format(cube_x, cube_y)
                     speed = 0.0
 
