@@ -75,10 +75,10 @@ def gripperClose(robot):
 def draw_rfu620_extension(robot, id, data):
     if id=='rfu620':
         posXY = combinedPose(robot.localisation.pose(), (-0.35, 0.14, 0))[:2]
-        for d in data[1]:
+        for index, d in enumerate(data[1], start=1):
             i, rssi = d[:2]  # i.e. 0x1000 0206 0000
             x, y, zone = (i >> 24)&0xFF, (i >> 16)&0xFF, i&0xFF
-            print hex(i), (x, y)
+            print hex(i), (x, y), rssi, '({}/{})'.format(index, len(data[1]))
             if (x + y) % 2 == 0:
                 if rssi > -60:
                     viewlog.dumpBeacon(posXY, color=(0, 0, 255))
@@ -252,6 +252,7 @@ class SICKRobotDay2016:
             if (not is_in_loading_zone(self.robot.localisation.pose())
                 and is_path_blocked(self.robot.laserData, self.robot.remissionData)):
                 print "ESCAPING FROM", self.robot.localisation.pose()
+                self.driver.stop()
                 break
         self.place_cube()
 
