@@ -321,6 +321,7 @@ class SICKRobotDay2016:
 
 
     def run( self ):
+        start_time = float('nan')  # just to be defined in case of EmergencyStopException
         try:
             if getattr( self.robot.laser, 'startLaser', None ):
                 # trigger rotation of the laser, low level function, ignore for log files
