@@ -159,13 +159,13 @@ class SICKRobotDay2016:
 
 
     def load_cube(self):
-        print "load cube"
+        print "load cube (time = {:.1f}s)".format(self.robot.time - self.start_time)
         self.driver.goStraight(0.3, timeout=30)
         gripperClose(self.robot)
 
     def place_cube(self):
         pos = combinedPose(self.robot.localisation.pose(), (0.2, 0, 0))[:2]  # TODO check proper offset
-        print "place cube at ({:.2f}, {:.2f})".format(*pos)
+        print "place cube at ({:.2f}, {:.2f} (time = {:.1f}))".format(pos[0], pos[1], self.robot.time - self.start_time)
         viewlog.dumpBeacon(pos, color=(255, 255, 255))
         viewlog.dumpObstacles([[pos]])
         gripperOpen(self.robot)
@@ -331,7 +331,7 @@ class SICKRobotDay2016:
 
 
     def run( self ):
-        start_time = float('nan')  # just to be defined in case of EmergencyStopException
+        self.start_time = float('nan')  # just to be defined in case of EmergencyStopException
         try:
             if getattr( self.robot.laser, 'startLaser', None ):
                 # trigger rotation of the laser, low level function, ignore for log files
@@ -339,7 +339,7 @@ class SICKRobotDay2016:
                 self.robot.laser.startLaser() 
             gripperOpen(self.robot)
             self.robot.waitForStart()
-            start_time = self.robot.time
+            self.start_time = self.robot.time
 
             self.robot.laser.start()    # laser also after start -- it should be already running
             self.robot.camera.start()
@@ -352,7 +352,7 @@ class SICKRobotDay2016:
 #                self.test_line(verbose = self.verbose)
 
         except EmergencyStopException, e:
-            print "EmergencyStopException at {} sec".format(self.robot.time - start_time)
+            print "EmergencyStopException at {} sec".format(self.robot.time - self.start_time)
         gripperDisableServos(self.robot.can)
         self.robot.laser.requestStop()
         self.robot.rfu620.requestStop()
