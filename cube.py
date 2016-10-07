@@ -24,11 +24,20 @@ def detect_cubes_v0(raw_laser_data, verbose=False):
             right_index += 1
         center_index = (left_index + right_index)/2
         cube_size = math.radians(right_index - left_index) * arr[center_index]/1000.0
+
+        # diagonal distance of the first and the last point
+        # using Cosine theorem
+        gama = math.radians(right_index - left_index)
+        a = arr[left_index + 1]/1000.0
+        b = arr[right_index - 1]/1000.0
+        diagonal_size = math.sqrt(abs(a*a + b*b - 2*a*b*math.cos(gama)))
         if verbose:
             print left_index, index, right_index, '->', center_index
             print arr[left_index:right_index+1]
-            print "CUBE SIZE", cube_size
-        if 0.1 < cube_size < 0.25:
+            print "CUBE SIZE", cube_size, diagonal_size
+        if 0.1 < cube_size < 0.25 or 0.1 < diagonal_size < 0.25:
+            if (0.1 < cube_size < 0.25) != (0.1 < diagonal_size < 0.25):
+                print "Cube Size WARNING", cube_size, diagonal_size
             yield (center_index, arr[center_index])
         arr[left_index + 1:right_index] = 10000
         index = np.argmin(arr[blind_offset:]) + blind_offset
