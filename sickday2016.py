@@ -19,6 +19,7 @@ except ImportError:
 
 from eduro import EmergencyStopException
 from eduromaxi import EduroMaxi
+from robot import SIDE_LEFT, SIDE_RIGHT
 from driver import Driver, normalizeAnglePIPI, angleTo
 from localisation import SimpleOdometry
 
@@ -138,6 +139,11 @@ class SICKRobotDay2016:
         self.verbose = verbose
         self.code = code
         self.robot.attachEmergencyStopButton()
+
+        # change robot wheel calibration
+        wd = 427.0 / 445.0 * 0.26/4.0 # with gear  1:4
+        delta = -0.00015
+        self.robot._WHEEL_DIAMETER = {SIDE_LEFT: wd+delta, SIDE_RIGHT: wd-delta}
 
         self.robot.attachCamera(sleep=0.5)
         self.robot.attachLaser( remission=True, pose=((0.24, -0.13, 0.08), (0,math.radians(180),0)) )
