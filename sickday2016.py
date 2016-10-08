@@ -37,7 +37,7 @@ from sdoplg import ReadSDO, WriteSDO
 
 import starter
 
-from cube import CubeDetector
+from cube import CubeDetector, verify_loaded_cube
 import numpy as np
 
 from cube_tools import cubesFromScan
@@ -274,6 +274,7 @@ class SICKRobotDay2016:
     def handle_single_cube(self, pts, rev_pts):
         if self.find_cube(timeout=20.0):
             self.load_cube()
+            print verify_loaded_cube(self.robot.laserData)
         for cmd in self.driver.followPolyLineG(pts, withStops=True):
             self.robot.setSpeedPxPa(*cmd)
             self.robot.update()

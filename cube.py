@@ -43,6 +43,13 @@ def detect_cubes_v0(raw_laser_data, verbose=False):
         index = np.argmin(arr[blind_offset:]) + blind_offset
 
 
+def verify_loaded_cube(data):
+    print 'verify_loaded_cube'
+    loaded = min(data[:45]) < 100
+    print data[:135:10]
+    return loaded, 0
+
+
 class CubeDetector:
 
     def __init__(self, laser_pose_6D, verbose=False):
