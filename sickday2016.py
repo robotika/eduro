@@ -186,7 +186,7 @@ class SICKRobotDay2016:
         viewlog.dumpBeacon(pos, color=(255, 255, 255))
         viewlog.dumpObstacles([[pos]])
         gripperOpen(self.robot)
-        self.driver.goStraight(-0.3, timeout=30)
+        self.driver.goStraight(-0.4, timeout=30)
 
     def game_over(self):
         print 'Game over (battery status = {}V)'.format(self.robot.battery)
