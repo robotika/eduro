@@ -15,11 +15,12 @@ import numpy as np
 
 
 color = "r" # "y"
+zeroAngel = 35
 
 
-def getCubeCenter( dist, ang, ver = 0, test = False ):
+def getCubeCenter( dist, ang, laserXY, ver = 0, test = False ):
     center = None
-    xArr, yArr = getCoordinates(dist, ang)
+    xArr, yArr = getCoordinates(dist, ang, laserXY = laserXY)
     if ver == 0: # the center of a conecting line between the firs and the last point.
         center = xArr[0] + ( xArr[-1] - xArr[0] )/2.0, yArr[0] + ( yArr[-1] - yArr[0] )/2.0
         print center
@@ -134,12 +135,13 @@ def getCoordinates(dist, ang, laserXY = None):
     return X, Y
     
 
-def cubesFromScan( scan, maxDist = 2.0, minDiff = 0.1, cubeSize = 0.16, laserXY = [0, 0] , test = False ):
+def cubesFromScan( scan, maxDist = 2.0, minDist = 0.01, minDiff = 0.1, cubeSize = 0.16, laserXY = [0.27, -0.13], test = False ):
     myCubeCenter = []
-    distAr = np.array(scan[40:])/1000.0 # 0:40 -> only robot, no cube TODO
+    distAr = np.array(scan[zeroAngel:])/1000.0 # 0:40 -> only robot, no cube TODO
     angAr = np.arange( -135, 136.0 )
-    angAr = angAr[40:]
+    angAr = angAr[zeroAngel:]
     distAr[ distAr > maxDist] = np.nan
+    distAr[ distAr < minDist] = np.nan
     diffAr = np.diff( distAr )
     #print distAr
     #print diffAr
@@ -166,7 +168,7 @@ def cubesFromScan( scan, maxDist = 2.0, minDiff = 0.1, cubeSize = 0.16, laserXY 
         pointDist = np.linalg.norm( [ x0 - x1, y0 - y1 ] )
         #print pointDist
         
-        if pointDist > 0.8 * cubeSize and pointDist < 1.5 * cubeSize:
+        if pointDist > 0.7 * cubeSize and pointDist < 1.6 * cubeSize:
             cubes.append( [bar, ang] )
             
     if cubes:
@@ -176,7 +178,7 @@ def cubesFromScan( scan, maxDist = 2.0, minDiff = 0.1, cubeSize = 0.16, laserXY 
 
         idCub = np.argmin( cubeDist )
         myCube = cubes[idCub]
-        myCubeCenter.append( getCubeCenter( myCube[0], myCube[1], ver = 0, test = test ) )
+        myCubeCenter.append( getCubeCenter( myCube[0], myCube[1], laserXY, ver = 0, test = test ) )
         
         
     if test:
@@ -204,24 +206,29 @@ def cubesFromScan( scan, maxDist = 2.0, minDiff = 0.1, cubeSize = 0.16, laserXY 
             plt.plot(x, y, "go-")
         x, y = getCoordinates( myCube[0], myCube[1], laserXY )
         plt.plot(x, y, "ko-")
-        plt.plot( myCubeCenter[0] + laserXY[0], myCubeCenter[1] + laserXY[1], "k+", ms = 20 )
+        mcc = myCubeCenter[0]
+        plt.plot( mcc[0], mcc[1], "k+", ms = 20 )
         plt.show()
     
     return myCubeCenter
 
 
-def checkLog( logFile, num ):
+def checkLog( logFile, num, num2 ):
+    if num2 is None:
+        num2 = num
     f = open(logFile, "r")
     ii = 0
     for line in f:
         if line[0] == "[":
-            if ii != num:
+            if ii < num:
                 ii += 1
                 continue
             scan = eval(line)
             target = cubesFromScan( scan, test = True )
             print target
-            break
+            if ii == num2:
+                break
+            ii += 1
 
 
 if __name__ == "__main__":
@@ -234,7 +241,11 @@ if __name__ == "__main__":
         im = cv2.imread( imF, 1 )
         findCubes( im, color )
     elif switch == "l":
+        scanNum2 = None
         logFile = sys.argv[2]
         scanNum = int(sys.argv[3])
-        checkLog( logFile, scanNum )
+        if len(sys.argv) > 4:
+            scanNum2 = int(sys.argv[4])
+        
+        checkLog( logFile, scanNum, scanNum2 )
 
