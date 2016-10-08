@@ -271,10 +271,12 @@ class SICKRobotDay2016:
         self.game_over()
 
 
-    def handle_single_cube(self, pts, rev_pts):
+    def handle_single_cube(self, pts, rev_pts, timeout=60):
         if self.find_cube(timeout=20.0):
             self.load_cube()
             print verify_loaded_cube(self.robot.laserData)
+
+        start_time = self.robot.time
         for cmd in self.driver.followPolyLineG(pts, withStops=True):
             self.robot.setSpeedPxPa(*cmd)
             self.robot.update()
@@ -284,6 +286,11 @@ class SICKRobotDay2016:
                 print "ESCAPING FROM", self.robot.localisation.pose()
                 self.driver.stop()
                 break
+            if self.robot.time - start_time > timeout:
+                print "TIMEOUT", self.robot.time - start_time
+                self.driver.goStraight(-0.3, timeout=10)
+                self.driver.turn(angle=math.radians(90), timeout=10)
+                self.driver.turn(angle=math.radians(-90), timeout=10)
         self.place_cube()
 
         # handle offset in case of blocked path
