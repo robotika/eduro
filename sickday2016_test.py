@@ -20,7 +20,7 @@ class Sickday2016Test(unittest.TestCase):
 
     def test_is_in_loading_zone(self):
         # TODO replace by real coordinates
-        self.assertTrue(is_in_loading_zone((0, 1.0, 0)))
+        self.assertFalse(is_in_loading_zone((0, 1.0, 0), (None, None)))
 
 
     def test_is_path_blocked(self):

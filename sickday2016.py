@@ -42,6 +42,9 @@ import numpy as np
 
 from cube_tools import cubesFromScan
 
+RFU620_POSE = (-0.35, 0.14, 0)
+
+
 def setupGripperModule(can):
     writer = WriteSDO( 0x7F, 0x2100, 1, [0xF] )  # enable servos
     for cmd in writer.generator():
@@ -77,8 +80,9 @@ def gripperClose(robot):
 
 def draw_rfu620_extension(robot, id, data):
     if id=='rfu620':
-        posXY = combinedPose(robot.localisation.pose(), (-0.35, 0.14, 0))[:2]
+        posXY = combinedPose(robot.localisation.pose(), RFU620_POSE)[:2]
         for index, d in enumerate(data[1], start=1):
+            robot.last_valid_rfid = d, posXY
             i, rssi = d[:2]  # i.e. 0x1000 0206 0000
             x, y, zone = (i >> 24)&0xFF, (i >> 16)&0xFF, i&0xFF
             print hex(i), (x, y), rssi, '({}/{})'.format(index, len(data[1]))
@@ -127,9 +131,20 @@ def is_path_blocked(raw_laser_data, raw_remission_data=None):
         return False
 
 
-def is_in_loading_zone(pose):
+def storage_tag(tag):
+    assert tag is not None
+    tag_id, rssi = tag[:2]
+    zone = tag_id & 0xFF
+    return zone in [1, 2]
+
+
+def is_in_loading_zone(pose, last_rfid):
     x, y, a = pose
-    return x < 3.5 and 1.5 < y < 5.5 # TODO use RFID for extra check
+    tag, tag_pose = last_rfid
+    if tag is None:
+        return x < 3.5 and 1.5 < y < 5.5
+    # TODO verify validity distance + take into account robot offset
+    return storage_tag(tag)
 
 
 class SICKRobotDay2016:
@@ -152,7 +167,9 @@ class SICKRobotDay2016:
         self.driver = Driver( self.robot, maxSpeed = 0.5, maxAngularSpeed = math.radians(180) )
         self.robot.localisation = SimpleOdometry()
 
+        self.robot.last_valid_rfid = None, None  # tag, position
         self.robot.addExtension(draw_rfu620_extension)
+
         self.robot.addExtension(draw_cubes_extension)
 
         self.robot.laser.stopOnExit = False    # for faster boot-up
@@ -260,7 +277,8 @@ class SICKRobotDay2016:
         for cmd in self.driver.followPolyLineG(pts, withStops=True):
             self.robot.setSpeedPxPa(*cmd)
             self.robot.update()
-            if (not is_in_loading_zone(self.robot.localisation.pose())
+            if (not is_in_loading_zone(self.robot.localisation.pose(),
+                                       self.robot.last_valid_rfid)
                 and is_path_blocked(self.robot.laserData, self.robot.remissionData)):
                 print "ESCAPING FROM", self.robot.localisation.pose()
                 self.driver.stop()
