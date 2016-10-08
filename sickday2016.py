@@ -291,6 +291,7 @@ class SICKRobotDay2016:
                 self.driver.goStraight(-0.3, timeout=10)
                 self.driver.turn(angle=math.radians(90), timeout=10)
                 self.driver.turn(angle=math.radians(-90), timeout=10)
+                start_time = self.robot.time
         self.place_cube()
 
         # handle offset in case of blocked path
